@@ -2,11 +2,12 @@ FROM toposoid/scala-base:2.12.12
 
 WORKDIR /app
 
+ARG TARGET_BRANCH
 ENV DEPLOYMENT=local
 
 RUN apt-get update \
 && apt-get -y install git \
 && git clone https://github.com/toposoid/toposoid-common.git
-
+&& git checkout -b ${TARGET_BRANCH}
 
 
