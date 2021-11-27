@@ -22,8 +22,10 @@ import akka.http.scaladsl.common.{EntityStreamingSupport, JsonEntityStreamingSup
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
+import com.ideal.linked.common.DeploymentConverter.conf
 import play.api.libs.json.Json
-import scala.util.{Failure, Success}
+
+import scala.util.{Failure, Success, Try}
 
 /**
  * Common Utilities in all toposoid project.
@@ -44,6 +46,22 @@ object ToposoidUtils {
     nodeType
   }
 
+  def callComponent(json:String, host:String, port:String, serviceName:String): String =Try {
+    val retryNum =  conf.getInt("retryCallMicroserviceNum") -1
+    for (i <- 0 to retryNum) {
+      val result:String  = this.callComponentImpl(json, host, port, serviceName)
+      if (result != "{}") {
+        return result
+      }
+      if(i == retryNum) throw new Exception("Results were not returned properly")
+    }
+    ""
+  }match {
+    case Success(s) => s
+    case Failure(e) => throw e
+  }
+
+
   /**
    * This function calls multiple microservices.
    * @param json
@@ -52,7 +70,7 @@ object ToposoidUtils {
    * @param serviceName
    * @return
    */
-  def callComponent(json:String, host:String, port:String, serviceName:String): String = {
+  private def callComponentImpl(json:String, host:String, port:String, serviceName:String): String = {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
@@ -66,7 +84,7 @@ object ToposoidUtils {
           Json.parse(data.getBytes("UTF-8"))
         }
       }
-    var queryResultJson:String = """"{"records":[]}""""
+    var queryResultJson:String = "{}"
     result.onComplete {
       case Success(js) =>
         println(s"Success: $js")
