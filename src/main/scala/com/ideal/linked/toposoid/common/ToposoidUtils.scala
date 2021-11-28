@@ -23,6 +23,7 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequ
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.ideal.linked.common.DeploymentConverter.conf
+import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json.Json
 
 import scala.util.{Failure, Success, Try}
@@ -30,7 +31,7 @@ import scala.util.{Failure, Success, Try}
 /**
  * Common Utilities in all toposoid project.
  */
-object ToposoidUtils {
+object ToposoidUtils extends LazyLogging{
 
   /**
    * Returns the Neo4J node type that corresponds to the sentence type.
@@ -87,10 +88,12 @@ object ToposoidUtils {
     var queryResultJson:String = "{}"
     result.onComplete {
       case Success(js) =>
-        println(s"Success: $js")
+        //println(s"Success: $js")
+        logger.info(s"Success: $js")
         queryResultJson = s"$js"
       case Failure(e) =>
-        println(s"Failure: $e")
+        //println(s"Failure: $e")
+        logger.error(s"Failure: $e")
     }
 
     while(!result.isCompleted){
