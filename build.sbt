@@ -1,12 +1,16 @@
 import Dependencies._
 
 ThisBuild / scalaVersion     := "2.12.12"
-ThisBuild / version          := "0.1.0"
+ThisBuild / version          := "0.2"
 ThisBuild / organization     := "com.ideal.linked"
 
 lazy val root = (project in file("."))
   .settings(
     name := "toposoid-common",
+    libraryDependencies += "com.typesafe.akka" %% "akka-http-spray-json" % "10.1.14",
+    libraryDependencies += "com.typesafe.akka" %% "akka-stream" % "2.5.31",
+    libraryDependencies += "com.typesafe.play" %% "play" % "2.8.8",
+    libraryDependencies += "com.ideal.linked" %% "scala-common" % "0.2",
     libraryDependencies += scalaTest % Test
   )
   .enablePlugins(AutomateHeaderPlugin)
