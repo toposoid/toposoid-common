@@ -1,5 +1,5 @@
 version: '3'
 services:
   toposoid-common:
-    image: toposoid-common:0.2
+    image: toposoid-common:0.3-SNAPSHOT
     tty: true
