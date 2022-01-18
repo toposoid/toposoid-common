@@ -15,7 +15,7 @@ RUN apt-get update \
 && cd .. \
 && git clone https://github.com/toposoid/toposoid-common.git \
 && cd toposoid-common \
-&& git checkout -b ${TARGET_BRANCH} \
-&& git pull origin ${TARGET_BRANCH}
+&& git fetch origin ${TARGET_BRANCH} \
+&& git checkout ${TARGET_BRANCH} \
 
 
