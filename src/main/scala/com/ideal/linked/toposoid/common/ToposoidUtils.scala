@@ -89,7 +89,7 @@ object ToposoidUtils extends LazyLogging{
     result.onComplete {
       case Success(js) =>
         //println(s"Success: $js")
-        logger.info(s"Success: $js")
+        logger.debug(s"Success: $js")
         queryResultJson = s"$js"
       case Failure(e) =>
         //println(s"Failure: $e")
