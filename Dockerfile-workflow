@@ -1,4 +1,4 @@
-FROM toposoid/scala-base:2.12.12
+FROM toposoid/scala-base:2.13.11
 
 WORKDIR /app
 
