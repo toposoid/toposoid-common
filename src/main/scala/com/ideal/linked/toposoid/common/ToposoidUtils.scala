@@ -34,14 +34,21 @@ import scala.util.{Failure, Success, Try}
 object ToposoidUtils extends LazyLogging{
 
   /**
-   * Returns the Neo4J node type that corresponds to the sentence type.
+   * Returns the Neo4J node type that corresponds to the sentenceType and featureType.
    * @param sentenceType
+   * @param featureType
    * @return
    */
-  def getNodeType(sentenceType:Int): String ={
-    val nodeType:String = sentenceType match{
-      case PREMISE.index => "PremiseNode"
-      case CLAIM.index => "ClaimNode"
+  def getNodeType(sentenceType:Int, featureType: Int= -1): String ={
+    val nodeType:String = (sentenceType, featureType) match{
+      case (PREMISE.index, -1) => "PremiseNode"
+      case (CLAIM.index, -1) => "ClaimNode"
+      case (PREMISE.index, SENTENCE.index) => "PremiseFeatureNode"
+      case (CLAIM.index, SENTENCE.index) => "ClaimFeatureNode"
+      case (PREMISE.index, IMAGE.index) => "PremiseFeatureNode"
+      case (CLAIM.index, IMAGE.index) => "ClaimFeatureNode"
+      case (PREMISE.index, TABLE.index) => "PremiseFeatureNode"
+      case (CLAIM.index, TABLE.index) => "ClaimFeatureNode"
       case _ => "UnknownNode"
     }
     nodeType
