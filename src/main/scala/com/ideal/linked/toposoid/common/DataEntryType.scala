@@ -16,6 +16,7 @@
 
 package com.ideal.linked.toposoid.common
 
-sealed abstract class FeatureInputType(val index: Int)
-final case object MANUAL extends FeatureInputType(0)
+sealed abstract class DataEntryType(val index: Int)
+final case object MANUAL extends DataEntryType(0)
+final case object BATCH extends DataEntryType(1)
 
