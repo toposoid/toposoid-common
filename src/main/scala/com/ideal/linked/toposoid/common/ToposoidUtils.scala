@@ -39,34 +39,23 @@ object ToposoidUtils extends LazyLogging{
    * @param featureType
    * @return
    */
-  def getNodeType(sentenceType:Int, featureType: Int= -1, scopeType: Int= -1): String = Try{
-    val nodeType:String = (sentenceType, scopeType) match{
-      case (PREMISE.index, -1) => "PremiseNode"
-      case (CLAIM.index, -1) => "ClaimNode"
-      case (PREMISE.index, LOCAL.index) => "PremiseNode"
-      case (CLAIM.index, LOCAL.index) => "ClaimNode"
-      case (PREMISE.index, SEMIGLOBAL.index) => "SemiGlobalPremiseNode"
-      case (CLAIM.index, SEMIGLOBAL.index) => "SemiGlobalClaimNode"
-      case (PREMISE.index, GLOBAL.index) => "GlobalPremiseNode"
-      case (CLAIM.index, GLOBAL.index) => "GlobalClaimNode"
+  def getNodeType(sentenceType:Int, scopeType: Int, featureType: Int): String = Try{
+    (sentenceType, scopeType, featureType) match{
+      case (PREMISE.index, LOCAL.index, PREDICATE_ARGUMENT.index) => "PremiseNode"
+      case (CLAIM.index, LOCAL.index, PREDICATE_ARGUMENT.index) => "ClaimNode"
+      case (PREMISE.index, SEMIGLOBAL.index, SENTENCE.index) => "SemiGlobalPremiseNode"
+      case (CLAIM.index, SEMIGLOBAL.index, SENTENCE.index) => "SemiGlobalClaimNode"
+      case (PREMISE.index, GLOBAL.index, DOCUMENT.index) => "GlobalPremiseNode"
+      case (CLAIM.index, GLOBAL.index, DOCUMENT.index) => "GlobalClaimNode"
       case _ => {
-        (sentenceType, featureType) match {
-          case (PREMISE.index, SENTENCE.index) => "SemiGlobalPremiseNode"
-          case (CLAIM.index, SENTENCE.index) => "SemiGlobalClaimNode"
-          case (PREMISE.index, DOCUMENT.index) => "GlobalPremiseNode"
-          case (CLAIM.index, DOCUMENT.index) => "GlobalClaimNode"
-          case _ => {
-            featureType match {
-              case SYNONYM.index => "SynonymNode"
-              case IMAGE.index => "ImageNode"
-              case TABLE.index => "TableNode"
-              case _ => throw new Exception("Unknown NodeType")
-            }
+          featureType match {
+            case SYNONYM.index => "SynonymNode"
+            case IMAGE.index => "ImageNode"
+            case TABLE.index => "TableNode"
+            case _ => throw new Exception("Unknown NodeType")
           }
-        }
       }
     }
-    nodeType
   } match {
     case Success(s) => s
     case Failure(e) => throw e
