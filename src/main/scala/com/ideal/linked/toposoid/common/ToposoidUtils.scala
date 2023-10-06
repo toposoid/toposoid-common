@@ -39,7 +39,7 @@ object ToposoidUtils extends LazyLogging{
    * @param featureType
    * @return
    */
-  def getNodeType(sentenceType:Int, scopeType: Int= -1, featureType: Int= -1): String = Try{
+  def getNodeType(sentenceType:Int, featureType: Int= -1, scopeType: Int= -1): String = Try{
     val nodeType:String = (sentenceType, scopeType) match{
       case (PREMISE.index, -1) => "PremiseNode"
       case (CLAIM.index, -1) => "ClaimNode"
