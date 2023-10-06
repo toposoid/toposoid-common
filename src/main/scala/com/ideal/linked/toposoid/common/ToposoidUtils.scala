@@ -39,20 +39,39 @@ object ToposoidUtils extends LazyLogging{
    * @param featureType
    * @return
    */
-  def getNodeType(sentenceType:Int, featureType: Int= -1): String ={
-    val nodeType:String = (sentenceType, featureType) match{
+  def getNodeType(sentenceType:Int, scopeType: Int= -1, featureType: Int= -1): String = Try{
+    val nodeType:String = (sentenceType, scopeType) match{
       case (PREMISE.index, -1) => "PremiseNode"
       case (CLAIM.index, -1) => "ClaimNode"
-      case (PREMISE.index, SENTENCE.index) => "PremiseFeatureNode"
-      case (CLAIM.index, SENTENCE.index) => "ClaimFeatureNode"
-      case (PREMISE.index, IMAGE.index) => "PremiseFeatureNode"
-      case (CLAIM.index, IMAGE.index) => "ClaimFeatureNode"
-      case (PREMISE.index, TABLE.index) => "PremiseFeatureNode"
-      case (CLAIM.index, TABLE.index) => "ClaimFeatureNode"
-      case _ => "UnknownNode"
+      case (PREMISE.index, LOCAL.index) => "PremiseNode"
+      case (CLAIM.index, LOCAL.index) => "ClaimNode"
+      case (PREMISE.index, SEMIGLOBAL.index) => "SemiGlobalPremiseNode"
+      case (CLAIM.index, SEMIGLOBAL.index) => "SemiGlobalClaimNode"
+      case (PREMISE.index, GLOBAL.index) => "GlobalPremiseNode"
+      case (CLAIM.index, GLOBAL.index) => "GlobalClaimNode"
+      case _ => {
+        (sentenceType, featureType) match {
+          case (PREMISE.index, SENTENCE.index) => "SemiGlobalPremiseNode"
+          case (CLAIM.index, SENTENCE.index) => "SemiGlobalClaimNode"
+          case (PREMISE.index, DOCUMENT.index) => "GlobalPremiseNode"
+          case (CLAIM.index, DOCUMENT.index) => "GlobalClaimNode"
+          case _ => {
+            featureType match {
+              case SYNONYM.index => "SynonymNode"
+              case IMAGE.index => "ImageNode"
+              case TABLE.index => "TableNode"
+              case _ => throw new Exception("Unknown NodeType")
+            }
+          }
+        }
+      }
     }
     nodeType
+  } match {
+    case Success(s) => s
+    case Failure(e) => throw e
   }
+
 
   def callComponent(json:String, host:String, port:String, serviceName:String): String =Try {
     val retryNum =  conf.getInt("retryCallMicroserviceNum") -1
