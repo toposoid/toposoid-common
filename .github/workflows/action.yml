@@ -46,6 +46,15 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
+          file: Dockerfile-base
+          push: true
+          tags: toposoid/${{ env.PJ_REPO }}-base:${{ env.PJ_VERSION }}
+          build-args: |
+            TARGET_BRANCH=${{ env.PJ_BRANCH }}
+      - name: Build And Push Docker Image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
           push: true
           tags: toposoid/toposoid-scala-lib:${{ env.PJ_VERSION }}
           build-args: |
