@@ -34,18 +34,33 @@ import scala.util.{Failure, Success, Try}
 object ToposoidUtils extends LazyLogging{
 
   /**
-   * Returns the Neo4J node type that corresponds to the sentence type.
+   * Returns the Neo4J node type that corresponds to the sentenceType and featureType.
    * @param sentenceType
+   * @param featureType
    * @return
    */
-  def getNodeType(sentenceType:Int): String ={
-    val nodeType:String = sentenceType match{
-      case PREMISE.index => "PremiseNode"
-      case CLAIM.index => "ClaimNode"
-      case _ => "UnknownNode"
+  def getNodeType(sentenceType:Int, scopeType: Int, featureType: Int): String = Try{
+    (sentenceType, scopeType, featureType) match{
+      case (PREMISE.index, LOCAL.index, PREDICATE_ARGUMENT.index) => "PremiseNode"
+      case (CLAIM.index, LOCAL.index, PREDICATE_ARGUMENT.index) => "ClaimNode"
+      case (PREMISE.index, SEMIGLOBAL.index, SENTENCE.index) => "SemiGlobalPremiseNode"
+      case (CLAIM.index, SEMIGLOBAL.index, SENTENCE.index) => "SemiGlobalClaimNode"
+      case (PREMISE.index, GLOBAL.index, DOCUMENT.index) => "GlobalPremiseNode"
+      case (CLAIM.index, GLOBAL.index, DOCUMENT.index) => "GlobalClaimNode"
+      case _ => {
+          featureType match {
+            case SYNONYM.index => "SynonymNode"
+            case IMAGE.index => "ImageNode"
+            case TABLE.index => "TableNode"
+            case _ => throw new Exception("Unknown NodeType")
+          }
+      }
     }
-    nodeType
+  } match {
+    case Success(s) => s
+    case Failure(e) => throw e
   }
+
 
   def callComponent(json:String, host:String, port:String, serviceName:String): String =Try {
     val retryNum =  conf.getInt("retryCallMicroserviceNum") -1

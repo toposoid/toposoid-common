@@ -16,14 +16,7 @@
 
 package com.ideal.linked.toposoid.common
 
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import org.scalatest.flatspec.AnyFlatSpec
-
-class ToposoidUtilsTest extends AnyFlatSpec with BeforeAndAfter with BeforeAndAfterAll{
-
-  "a json query" should "be handled properly" in {
-    val result:String = ToposoidUtils.callComponent("{\"data\":\"テスト\"}", "jsonplaceholder.typicode.com", "80", "posts")
-    assert(result.contains("\"data\":\"テスト\""))
-  }
-
-}
+sealed abstract class ScopeType(val index: Int)
+final case object LOCAL extends ScopeType(0)
+final case object SEMIGLOBAL extends ScopeType(1)
+final case object GLOBAL extends ScopeType(2)
