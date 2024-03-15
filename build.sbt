@@ -1,7 +1,7 @@
 import Dependencies._
 
 ThisBuild / scalaVersion     := "2.13.11"
-ThisBuild / version          := "0.5"
+ThisBuild / version          := "0.6-SNAPSHOT"
 ThisBuild / organization     := "com.ideal.linked"
 
 lazy val root = (project in file("."))
@@ -10,7 +10,7 @@ lazy val root = (project in file("."))
     libraryDependencies += "com.typesafe.akka" %% "akka-http-spray-json" % "10.1.15",
     libraryDependencies += "com.typesafe.akka" %% "akka-stream" % "2.5.31",
     libraryDependencies += "com.typesafe.play" %% "play" % "2.8.18",
-    libraryDependencies += "com.ideal.linked" %% "scala-common" % "0.5",
+    libraryDependencies += "com.ideal.linked" %% "scala-common" % "0.6-SNAPSHOT",
     libraryDependencies += scalaTest % Test
   )
   .enablePlugins(AutomateHeaderPlugin)
