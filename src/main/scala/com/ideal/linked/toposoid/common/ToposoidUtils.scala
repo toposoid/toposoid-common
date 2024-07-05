@@ -34,6 +34,20 @@ import scala.util.{Failure, Success, Try}
 object ToposoidUtils extends LazyLogging{
 
   /**
+   * Returns a formatted logger message.
+   * @param message
+   * @param username
+   * @return
+   */
+  def formatMessageForLogger(message:String, username:String):String = Try{
+    message + "\t" + username
+  } match {
+    case Success(s) => s
+    case Failure(e) => throw e
+  }
+
+
+  /**
    * Returns the Neo4J node type that corresponds to the sentenceType and featureType.
    * @param sentenceType
    * @param featureType
