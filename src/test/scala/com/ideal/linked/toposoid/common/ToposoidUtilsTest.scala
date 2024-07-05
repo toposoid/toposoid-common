@@ -22,7 +22,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 class ToposoidUtilsTest extends AnyFlatSpec with BeforeAndAfter with BeforeAndAfterAll{
 
   "a json query" should "be handled properly" in {
-    val result:String = ToposoidUtils.callComponent("{\"data\":\"テスト\"}", "jsonplaceholder.typicode.com", "80", "posts")
+    val result:String = ToposoidUtils.callComponent("{\"data\":\"テスト\"}", "jsonplaceholder.typicode.com", "80", "posts", "guest")
     assert(result.contains("\"data\":\"テスト\""))
   }
 

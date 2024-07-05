@@ -16,6 +16,10 @@
 
 package com.ideal.linked.toposoid.common
 
-sealed abstract class CustomHeaderName(val name: String) {
-  final case object USERNAME extends CustomHeaderName("X_TOPOSOID_USERNAME")
+
+sealed abstract class CustomHeaderName(val str: String) {
+  override def toString: String = str
 }
+
+case object USERNAME extends CustomHeaderName("X_TOPOSOID_USERNAME")
+
