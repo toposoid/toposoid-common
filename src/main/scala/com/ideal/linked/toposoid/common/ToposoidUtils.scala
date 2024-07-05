@@ -19,6 +19,7 @@ package com.ideal.linked.toposoid.common
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.common.{EntityStreamingSupport, JsonEntityStreamingSupport}
+import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
@@ -40,12 +41,16 @@ object ToposoidUtils extends LazyLogging{
    * @return
    */
   def formatMessageForLogger(message:String, username:String):String = Try{
-    message + "\t" + username
+    isEmpty(message) match {
+      case true => "\t" + username
+      case _ => message.replace("\t", " ") + "\t" + username
+    }
   } match {
     case Success(s) => s
     case Failure(e) => throw e
   }
 
+  def isEmpty(x: String) = x == null || x.trim.isEmpty
 
   /**
    * Returns the Neo4J node type that corresponds to the sentenceType and featureType.
@@ -76,10 +81,10 @@ object ToposoidUtils extends LazyLogging{
   }
 
 
-  def callComponent(json:String, host:String, port:String, serviceName:String): String =Try {
+  def callComponent(json:String, host:String, port:String, serviceName:String, userName:String): String =Try {
     val retryNum =  conf.getInt("retryCallMicroserviceNum") -1
     for (i <- 0 to retryNum) {
-      val result:String  = this.callComponentImpl(json, host, port, serviceName)
+      val result:String  = this.callComponentImpl(json, host, port, serviceName, userName)
       if (result != "{}") {
         return result
       }
@@ -100,7 +105,7 @@ object ToposoidUtils extends LazyLogging{
    * @param serviceName
    * @return
    */
-  private def callComponentImpl(json:String, host:String, port:String, serviceName:String): String = {
+  private def callComponentImpl(json:String, host:String, port:String, serviceName:String, userName:String): String = {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
@@ -108,6 +113,9 @@ object ToposoidUtils extends LazyLogging{
 
     val entity = HttpEntity(ContentTypes.`application/json`, json)
     val request = HttpRequest(uri = "http://" + host + ":" + port + "/" + serviceName, method = HttpMethods.POST, entity = entity)
+                  .withHeaders(
+                    RawHeader(USERNAME.str, userName)
+                  )
     val result = Http().singleRequest(request)
       .flatMap { res =>
         Unmarshal(res).to[String].map { data =>
