@@ -81,10 +81,10 @@ object ToposoidUtils extends LazyLogging{
   }
 
 
-  def callComponent(json:String, host:String, port:String, serviceName:String, userName:String): String =Try {
+  def callComponent(json:String, host:String, port:String, serviceName:String, transversalState:TransversalState): String =Try {
     val retryNum =  conf.getInt("retryCallMicroserviceNum") -1
     for (i <- 0 to retryNum) {
-      val result:String  = this.callComponentImpl(json, host, port, serviceName, userName)
+      val result:String  = this.callComponentImpl(json, host, port, serviceName, transversalState)
       if (result != "{}") {
         return result
       }
@@ -105,7 +105,7 @@ object ToposoidUtils extends LazyLogging{
    * @param serviceName
    * @return
    */
-  private def callComponentImpl(json:String, host:String, port:String, serviceName:String, userName:String): String = {
+  private def callComponentImpl(json:String, host:String, port:String, serviceName:String, transversalState:TransversalState): String = {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
@@ -113,9 +113,7 @@ object ToposoidUtils extends LazyLogging{
 
     val entity = HttpEntity(ContentTypes.`application/json`, json)
     val request = HttpRequest(uri = "http://" + host + ":" + port + "/" + serviceName, method = HttpMethods.POST, entity = entity)
-                  .withHeaders(
-                    RawHeader(USERNAME.str, userName)
-                  )
+                  .withHeaders(RawHeader(TRANSVERSAL_STATE.str, Json.toJson(transversalState).toString()))
     val result = Http().singleRequest(request)
       .flatMap { res =>
         Unmarshal(res).to[String].map { data =>
@@ -126,11 +124,11 @@ object ToposoidUtils extends LazyLogging{
     result.onComplete {
       case Success(js) =>
         //println(s"Success: $js")
-        logger.debug(s"Success: $js")
+        logger.debug(formatMessageForLogger(s"Success: $js", transversalState.username))
         queryResultJson = s"$js"
       case Failure(e) =>
         //println(s"Failure: $e")
-        logger.error(s"Failure: $e")
+        logger.error(formatMessageForLogger(s"Failure: $e", transversalState.username))
     }
 
     while(!result.isCompleted){
