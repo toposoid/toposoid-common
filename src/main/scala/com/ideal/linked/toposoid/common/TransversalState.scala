@@ -16,16 +16,11 @@
 
 package com.ideal.linked.toposoid.common
 
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import org.scalatest.flatspec.AnyFlatSpec
+import play.api.libs.json.{Json, OWrites, Reads}
 
-class ToposoidUtilsTest extends AnyFlatSpec with BeforeAndAfter with BeforeAndAfterAll{
-
-  val transversalState = TransversalState(username="guest")
-
-  "a json query" should "be handled properly" in {
-    val result:String = ToposoidUtils.callComponent("{\"data\":\"テスト\"}", "jsonplaceholder.typicode.com", "80", "posts", transversalState)
-    assert(result.contains("\"data\":\"テスト\""))
-  }
-
+case class TransversalState(username:String)
+object TransversalState {
+  implicit val jsonWrites: OWrites[TransversalState] = Json.writes[TransversalState]
+  implicit val jsonReads: Reads[TransversalState] = Json.reads[TransversalState]
 }
+

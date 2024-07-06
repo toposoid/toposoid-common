@@ -21,5 +21,5 @@ sealed abstract class CustomHeaderName(val str: String) {
   override def toString: String = str
 }
 
-case object USERNAME extends CustomHeaderName("X_TOPOSOID_USERNAME")
+case object TRANSVERSAL_STATE extends CustomHeaderName("X_TOPOSOID_TRANSVERSAL_STATE")
 
