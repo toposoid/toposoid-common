@@ -124,11 +124,11 @@ object ToposoidUtils extends LazyLogging{
     result.onComplete {
       case Success(js) =>
         //println(s"Success: $js")
-        logger.debug(formatMessageForLogger(s"Success: $js", transversalState.username))
+        logger.debug(formatMessageForLogger(s"Success: $js", transversalState.userId))
         queryResultJson = s"$js"
       case Failure(e) =>
         //println(s"Failure: $e")
-        logger.error(formatMessageForLogger(s"Failure: $e", transversalState.username))
+        logger.error(formatMessageForLogger(s"Failure: $e", transversalState.userId))
     }
 
     while(!result.isCompleted){
