@@ -50,6 +50,20 @@ object ToposoidUtils extends LazyLogging{
     case Failure(e) => throw e
   }
 
+  def encodeJsonInJson(json:String):String = Try{
+    json.replaceAll("\"", "___###DQ###___").replaceAll("\n", "\\\\n")
+  } match {
+    case Success(s) => s
+    case Failure(e) => throw e
+  }
+
+  def decodeJsonInJson(json: String): String = Try {
+    json.replaceAll("___###DQ###___", "\"").replaceAll("\\\\n", "\n")
+  } match {
+    case Success(s) => s
+    case Failure(e) => throw e
+  }
+
   def isEmpty(x: String) = x == null || x.trim.isEmpty
 
   /**
