@@ -12,6 +12,7 @@ lazy val root = (project in file("."))
     libraryDependencies += "com.typesafe.play" %% "play" % "2.8.18",
     libraryDependencies += "com.ideal.linked" %% "scala-common" % "0.6-SNAPSHOT",
     libraryDependencies += "com.ideal.linked" %% "toposoid-knowledgebase-model" % "0.6-SNAPSHOT",
+      libraryDependencies += "com.lightbend.akka" %% "akka-stream-alpakka-sqs" % "2.0.2",
     libraryDependencies += scalaTest % Test
   )
   .enablePlugins(AutomateHeaderPlugin)

@@ -23,10 +23,16 @@ import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
+import com.github.matsluni.akkahttpspi.AkkaHttpClient
 import com.ideal.linked.common.DeploymentConverter.conf
 import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json.Json
+import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.sqs.SqsAsyncClient
+import software.amazon.awssdk.services.sqs.model.SendMessageRequest
 
+import java.net.URI
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -150,4 +156,35 @@ object ToposoidUtils extends LazyLogging{
     }
     queryResultJson
   }
+
+  def publishMessage(json: String, mqHost:String, mqPort:String, queueName:String ): Unit = {
+
+    implicit val actorSystem = ActorSystem("example")
+
+    val testEndPoint = "http://" + mqHost + ":" + mqPort
+    val queueUrl = testEndPoint + "/" + queueName
+
+    val sqs = SqsAsyncClient
+      .builder()
+      .credentialsProvider(
+        StaticCredentialsProvider.create(
+          AwsBasicCredentials.create(conf.getString("TOPOSOID_AWS_CREDENTIAL_ACCESSKEY"), conf.getString("TOPOSOID_AWS_CREDINTIAL_SECRETKEY")) // (1)
+        )
+      )
+      .endpointOverride(URI.create(testEndPoint)) // (2)
+      .region(Region.AP_NORTHEAST_1)
+      .httpClient(AkkaHttpClient.builder()
+        .withActorSystem(actorSystem).build())
+      .build()
+
+    sqs.sendMessage(
+      SendMessageRequest.builder()
+        .queueUrl(queueUrl)
+        .messageGroupId("x")
+        .messageBody(json)
+        .build()
+    ).join()
+
+  }
+
 }
