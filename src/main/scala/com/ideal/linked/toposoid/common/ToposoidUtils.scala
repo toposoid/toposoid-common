@@ -157,7 +157,7 @@ object ToposoidUtils extends LazyLogging{
     queryResultJson
   }
 
-  def publishMessage(json: String, mqHost:String, mqPort:String, queueName:String ): Unit = {
+  def publishMessage(json: String, mqHost:String, mqPort:String, queueName:String, region:Region = Region.AP_NORTHEAST_1 ): Unit = {
 
     implicit val actorSystem = ActorSystem("example")
 
@@ -168,11 +168,11 @@ object ToposoidUtils extends LazyLogging{
       .builder()
       .credentialsProvider(
         StaticCredentialsProvider.create(
-          AwsBasicCredentials.create(conf.getString("TOPOSOID_MQ_ACCESS_KEY"), conf.getString("TOPOSOID_MQ_SECRET_KEY")) // (1)
+          AwsBasicCredentials.create(mqHost, mqPort) // (1)
         )
       )
       .endpointOverride(URI.create(testEndPoint)) // (2)
-      .region(Region.AP_NORTHEAST_1)
+      .region(region)
       .httpClient(AkkaHttpClient.builder()
         .withActorSystem(actorSystem).build())
       .build()
