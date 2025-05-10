@@ -173,7 +173,7 @@ object ToposoidUtils extends LazyLogging{
       .builder()
       .credentialsProvider(
         StaticCredentialsProvider.create(
-          AwsBasicCredentials.create(mqHost, mqPort) // (1)
+          AwsBasicCredentials.create(conf.getString("TOPOSOID_MQ_ACCESS_KEY"), conf.getString("TOPOSOID_MQ_SECRET_KEY")) // (1)
         )
       )
       .endpointOverride(URI.create(testEndPoint)) // (2)
