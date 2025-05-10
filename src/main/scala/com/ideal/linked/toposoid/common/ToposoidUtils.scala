@@ -24,19 +24,14 @@ import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
-import com.github.matsluni.akkahttpspi.AkkaHttpClient
+
 import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{Knowledge, KnowledgeForImage, KnowledgeForTable, KnowledgeSentenceSet}
 import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
 import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json.Json
-import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
-import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.sqs.SqsAsyncClient
-import software.amazon.awssdk.services.sqs.model.SendMessageRequest
 import io.jvm.uuid.UUID
 
-import java.net.URI
 import scala.util.{Failure, Success, Try}
 
 
@@ -160,36 +155,6 @@ object ToposoidUtils extends LazyLogging{
       Thread.sleep(20)
     }
     queryResultJson
-  }
-
-  def publishMessage(json: String, mqHost:String, mqPort:String, queueName:String, region:Region = Region.AP_NORTHEAST_1 ): Unit = {
-
-    implicit val actorSystem = ActorSystem("example")
-
-    val testEndPoint = "http://" + mqHost + ":" + mqPort
-    val queueUrl = testEndPoint + "/" + queueName
-
-    val sqs = SqsAsyncClient
-      .builder()
-      .credentialsProvider(
-        StaticCredentialsProvider.create(
-          AwsBasicCredentials.create(mqHost, mqPort) // (1)
-        )
-      )
-      .endpointOverride(URI.create(testEndPoint)) // (2)
-      .region(region)
-      .httpClient(AkkaHttpClient.builder()
-        .withActorSystem(actorSystem).build())
-      .build()
-
-    sqs.sendMessage(
-      SendMessageRequest.builder()
-        .queueUrl(queueUrl)
-        .messageGroupId("x")
-        .messageBody(json)
-        .build()
-    ).join()
-
   }
 
   private def convertKnowledge(knowledge: Knowledge): Knowledge = {
