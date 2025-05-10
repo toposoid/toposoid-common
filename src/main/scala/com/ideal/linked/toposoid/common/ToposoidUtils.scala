@@ -1,17 +1,18 @@
 /*
- * Copyright 2021 Linked Ideal LLC.[https://linked-ideal.com/]
+ * Copyright (C) 2025  Linked Ideal LLC.[https://linked-ideal.com/]
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 package com.ideal.linked.toposoid.common
@@ -25,15 +26,19 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.github.matsluni.akkahttpspi.AkkaHttpClient
 import com.ideal.linked.common.DeploymentConverter.conf
+import com.ideal.linked.toposoid.knowledgebase.regist.model.{Knowledge, KnowledgeForImage, KnowledgeForTable, KnowledgeSentenceSet}
+import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
 import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json.Json
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest
+import io.jvm.uuid.UUID
 
 import java.net.URI
 import scala.util.{Failure, Success, Try}
+
 
 /**
  * Common Utilities in all toposoid project.
@@ -186,5 +191,46 @@ object ToposoidUtils extends LazyLogging{
     ).join()
 
   }
+
+  private def convertKnowledge(knowledge: Knowledge): Knowledge = {
+    val knowledgeForImages: List[KnowledgeForImage] = knowledge.knowledgeForImages.map(y => {
+      Option(y.id) match {
+        case Some(x) => {
+          if (x.trim().equals("")) KnowledgeForImage(UUID.random.toString, y.imageReference)
+          else y
+        }
+        case None => {
+          KnowledgeForImage(UUID.random.toString, y.imageReference)
+        }
+      }
+    })
+    val knowledgeForTables: List[KnowledgeForTable] = knowledge.knowledgeForTables.map(y => {
+      Option(y.id) match {
+        case Some(x) => {
+          if (x.trim().equals("")) KnowledgeForTable(UUID.random.toString, y.tableReference)
+          else y
+        }
+        case None => {
+          KnowledgeForTable(UUID.random.toString, y.tableReference)
+        }
+      }
+    })
+    Knowledge(knowledge.sentence, knowledge.lang, knowledge.extentInfoJson, knowledge.isNegativeSentence, knowledgeForImages, knowledgeForTables, knowledgeForDocument = knowledge.knowledgeForDocument, documentPageReference = knowledge.documentPageReference)
+  }
+
+  def assignId(knowledgeSentenceSet: KnowledgeSentenceSet): (KnowledgeSentenceSetForParser, String) = {
+    val propositionId = UUID.random.toString
+    val knowledgeForParserPremise: List[KnowledgeForParser] = knowledgeSentenceSet.premiseList.map(x => KnowledgeForParser(propositionId, UUID.random.toString, convertKnowledge(x)))
+    val knowledgeForParserClaim: List[KnowledgeForParser] = knowledgeSentenceSet.claimList.map(x => KnowledgeForParser(propositionId, UUID.random.toString, convertKnowledge(x)))
+
+    (KnowledgeSentenceSetForParser(
+      premiseList = knowledgeForParserPremise,
+      premiseLogicRelation = knowledgeSentenceSet.premiseLogicRelation,
+      claimList = knowledgeForParserClaim,
+      claimLogicRelation = knowledgeSentenceSet.claimLogicRelation
+    ), propositionId)
+  }
+
+
 
 }
