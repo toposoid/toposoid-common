@@ -31,7 +31,7 @@ object InMemoryDbUtils {
     Endpoint(conf.getString("TOPOSOID_DEDUCTION_UNIT4_HOST"), port = conf.getString("TOPOSOID_DEDUCTION_UNIT4_PORT"), name = conf.getString("TOPOSOID_DEDUCTION_UNIT4_NAME")),
     Endpoint(conf.getString("TOPOSOID_DEDUCTION_UNIT5_HOST"), port = conf.getString("TOPOSOID_DEDUCTION_UNIT5_PORT"), name = conf.getString("TOPOSOID_DEDUCTION_UNIT5_NAME")))
 
-  def getEndPointsFromInMemoryDB(transversalState: TransversalState): Seq[Endpoint] = {
+  def getEndPoints(transversalState: TransversalState): Seq[Endpoint] = {
     val userInfo = KeyValueStoreInfo(identifier = transversalState.userId, key = "DEDUCTION_UNIT_ENDPOINTS", value = "")
     val responseJson = ToposoidUtils.callComponent(
       Json.toJson(userInfo).toString(),
