@@ -24,9 +24,10 @@ import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
-
 import com.ideal.linked.common.DeploymentConverter.conf
+import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode, KnowledgeBaseSemiGlobalNode, KnowledgeFeatureReference, LocalContext, LocalContextForFeature, PredicateArgumentStructure}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{Knowledge, KnowledgeForImage, KnowledgeForTable, KnowledgeSentenceSet}
+import com.ideal.linked.toposoid.protocol.model.base.{AnalyzedSentenceObject, CoveredPropositionResult, DeductionResult}
 import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
 import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json.Json
@@ -197,5 +198,73 @@ object ToposoidUtils extends LazyLogging{
   }
 
 
+  def parseSpecialSymbol(knowledgeForParser: KnowledgeForParser): AnalyzedSentenceObject = {
+
+    val propositionId = knowledgeForParser.propositionId
+    val sentenceId = knowledgeForParser.sentenceId
+    val documentId = knowledgeForParser.knowledge.knowledgeForDocument.id
+
+    val localContext = LocalContext(
+      lang = knowledgeForParser.knowledge.lang,
+      namedEntity = "",
+      rangeExpressions = Map.empty[String, Map[String, String]],
+      categories = Map.empty[String, String],
+      domains = Map.empty[String, String],
+      knowledgeFeatureReferences = List.empty[KnowledgeFeatureReference]
+    )
+
+    val caseType = "-"
+
+    val predicateArgumentStructure = PredicateArgumentStructure(
+      currentId = 0,
+      parentId = -1,
+      isMainSection = true,
+      surface = knowledgeForParser.knowledge.sentence,
+      normalizedName = knowledgeForParser.knowledge.sentence,
+      dependType = "-",
+      caseType = caseType,
+      isDenialWord = false,
+      isConditionalConnection = false,
+      surfaceYomi = "",
+      normalizedNameYomi = "",
+      modalityType = "-",
+      parallelType = "-",
+      nodeType = 1,
+      morphemes = List("-")
+    )
+
+    val node = KnowledgeBaseNode(
+      nodeId = sentenceId + "-0",
+      propositionId = propositionId,
+      sentenceId = sentenceId,
+      predicateArgumentStructure = predicateArgumentStructure,
+      localContext = localContext,
+    )
+    val nodeMap = Map(sentenceId + "-0" -> node)
+
+    val localContextForFeature = LocalContextForFeature(
+      lang = knowledgeForParser.knowledge.lang,
+      knowledgeFeatureReferences = List.empty[KnowledgeFeatureReference]
+    )
+
+    val knowledgeBaseSemiGlobalNode = KnowledgeBaseSemiGlobalNode(
+      sentenceId = sentenceId,
+      propositionId = propositionId,
+      documentId = documentId,
+      sentence = knowledgeForParser.knowledge.sentence,
+      sentenceType = 1,
+      localContextForFeature = localContextForFeature,
+    )
+
+    val defaultDeductionResult = DeductionResult(status = false,
+      coveredPropositionResults = List.empty[CoveredPropositionResult]
+    )
+    AnalyzedSentenceObject(
+      nodeMap = nodeMap,
+      edgeList = List.empty[KnowledgeBaseEdge],
+      knowledgeBaseSemiGlobalNode = knowledgeBaseSemiGlobalNode,
+      deductionResult = defaultDeductionResult
+    )
+  }
 
 }
