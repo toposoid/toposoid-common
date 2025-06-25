@@ -33,6 +33,7 @@ import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json.Json
 import io.jvm.uuid.UUID
 
+import scala.util.matching.Regex
 import scala.util.{Failure, Success, Try}
 
 
@@ -40,6 +41,10 @@ import scala.util.{Failure, Success, Try}
  * Common Utilities in all toposoid project.
  */
 object ToposoidUtils extends LazyLogging{
+
+  val langPatternJP: Regex = "^ja_.*".r
+  val langPatternEN: Regex = "^en_.*".r
+  val langPatternSpecialSymbol1: Regex = "^@@_#[0-9]+".r
 
   /**
    * Returns a formatted logger message.
