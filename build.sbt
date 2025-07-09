@@ -16,6 +16,7 @@ lazy val root = (project in file("."))
     libraryDependencies += "com.ideal.linked" %% "toposoid-deduction-protocol-model" % "0.6-SNAPSHOT",
     libraryDependencies += "com.lightbend.akka" %% "akka-stream-alpakka-sqs" % "2.0.2",
     libraryDependencies += "io.jvm.uuid" %% "scala-uuid" % "0.3.1",
+    libraryDependencies +=   "com.softwaremill.sttp.client4" %% "core" % "4.0.9",
     libraryDependencies += scalaTest % Test
   )
   .enablePlugins(AutomateHeaderPlugin)

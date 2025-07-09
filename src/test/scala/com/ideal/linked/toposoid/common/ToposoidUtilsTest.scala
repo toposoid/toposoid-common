@@ -26,7 +26,7 @@ class ToposoidUtilsTest extends AnyFlatSpec with BeforeAndAfter with BeforeAndAf
 
   "a json query" should "be handled properly" in {
     val result:String = ToposoidUtils.callComponent("{\"data\":\"テスト\"}", "jsonplaceholder.typicode.com", "80", "posts", transversalState)
-    assert(result.contains("\"data\":\"テスト\""))
+    assert(result.contains("\"data\": \"テスト\""))
   }
 
   /*
