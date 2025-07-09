@@ -17,6 +17,21 @@
 
 package com.ideal.linked.toposoid.common
 
+import com.ideal.linked.common.DeploymentConverter.conf
+import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode, KnowledgeBaseSemiGlobalNode, KnowledgeFeatureReference, LocalContext, LocalContextForFeature, PredicateArgumentStructure}
+import com.ideal.linked.toposoid.knowledgebase.regist.model.{Knowledge, KnowledgeForImage, KnowledgeForTable, KnowledgeSentenceSet}
+import com.ideal.linked.toposoid.protocol.model.base.{AnalyzedSentenceObject, CoveredPropositionResult, DeductionResult}
+import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
+import com.typesafe.scalalogging.LazyLogging
+import io.jvm.uuid.UUID
+
+import scala.util.matching.Regex
+import scala.util.{Failure, Success, Try}
+import sttp.client4._
+import play.api.libs.json.Json
+
+import scala.concurrent.duration.{Duration, DurationInt}
+/*
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.common.{EntityStreamingSupport, JsonEntityStreamingSupport}
@@ -24,17 +39,7 @@ import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
-import com.ideal.linked.common.DeploymentConverter.conf
-import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode, KnowledgeBaseSemiGlobalNode, KnowledgeFeatureReference, LocalContext, LocalContextForFeature, PredicateArgumentStructure}
-import com.ideal.linked.toposoid.knowledgebase.regist.model.{Knowledge, KnowledgeForImage, KnowledgeForTable, KnowledgeSentenceSet}
-import com.ideal.linked.toposoid.protocol.model.base.{AnalyzedSentenceObject, CoveredPropositionResult, DeductionResult}
-import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
-import com.typesafe.scalalogging.LazyLogging
-import play.api.libs.json.Json
-import io.jvm.uuid.UUID
-
-import scala.util.matching.Regex
-import scala.util.{Failure, Success, Try}
+*/
 
 
 /**
@@ -131,6 +136,31 @@ object ToposoidUtils extends LazyLogging{
    * @param serviceName
    * @return
    */
+
+
+
+  private def callComponentImpl(json:String, host:String, port:String, serviceName:String, transversalState:TransversalState): String = {
+    val url = s"http://${host}:${port}/${serviceName}"
+    val backend = DefaultSyncBackend(
+      options = BackendOptions.connectionTimeout(1.minute))
+
+    val request = basicRequest
+      .contentType("application/json")
+      .header(TRANSVERSAL_STATE.str, Json.toJson(transversalState).toString())
+      .readTimeout(5.minutes)
+      .body(json)
+      .post(uri"${url}")
+    val response = request.send(backend)
+
+    response.body match {
+      case Left(error) => {
+        logger.error(formatMessageForLogger(s"Failure: $error", transversalState.userId))
+        "{}"
+      }
+      case Right(data) => data
+    }
+  }
+  /*
   private def callComponentImpl(json:String, host:String, port:String, serviceName:String, transversalState:TransversalState): String = {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
@@ -162,6 +192,7 @@ object ToposoidUtils extends LazyLogging{
     }
     queryResultJson
   }
+  */
 
   private def convertKnowledge(knowledge: Knowledge): Knowledge = {
     val knowledgeForImages: List[KnowledgeForImage] = knowledge.knowledgeForImages.map(y => {
