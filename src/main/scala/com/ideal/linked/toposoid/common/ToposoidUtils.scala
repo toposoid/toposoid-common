@@ -29,6 +29,7 @@ import scala.util.matching.Regex
 import scala.util.{Failure, Success, Try}
 import sttp.client4._
 import play.api.libs.json.Json
+import sttp.model.HttpVersion
 
 import scala.concurrent.duration.{Duration, DurationInt}
 /*
@@ -148,6 +149,7 @@ object ToposoidUtils extends LazyLogging{
       .contentType("application/json")
       .header(TRANSVERSAL_STATE.str, Json.toJson(transversalState).toString())
       .readTimeout(5.minutes)
+      .httpVersion(HttpVersion.HTTP_1_1)
       .body(json)
       .post(uri"${url}")
     val response = request.send(backend)
