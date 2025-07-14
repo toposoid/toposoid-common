@@ -156,6 +156,7 @@ object ToposoidUtils extends LazyLogging{
 
     response.body match {
       case Left(error) => {
+        logger.error(formatMessageForLogger(json, transversalState.userId))
         logger.error(formatMessageForLogger(s"Failure: $error", transversalState.userId))
         "{}"
       }
