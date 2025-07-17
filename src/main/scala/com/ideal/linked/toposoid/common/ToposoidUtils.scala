@@ -314,5 +314,20 @@ object ToposoidUtils extends LazyLogging{
     s.replaceAll("\"", "＂")
   }
 
+  def preprocessForSentence(knowledgeList: List[Knowledge]):List[Knowledge] = {
+    knowledgeList.map(x => {
+      Knowledge(
+        sentence = escapeDoubleQuote(escapeSingleQuote(x.sentence)),
+        lang = x.lang,
+        extentInfoJson = x.extentInfoJson,
+        isNegativeSentence = x.isNegativeSentence,
+        knowledgeForImages = x.knowledgeForImages,
+        knowledgeForTables = x.knowledgeForTables,
+        knowledgeForDocument = x.knowledgeForDocument,
+        documentPageReference = x.documentPageReference
+      )
+    })
+  }
+
 
 }
