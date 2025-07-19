@@ -2,6 +2,5 @@ version: '3'
 services:
   toposoid-common:
     image: toposoid-common:0.6
-    environment:
     tty: true
 
