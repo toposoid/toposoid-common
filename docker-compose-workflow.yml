@@ -1,7 +1,7 @@
 version: '3'
 services:
   toposoid-common:
-    image: toposoid-common:0.6-SNAPSHOT
+    image: toposoid-common:0.6
     environment:
       - TOPOSOID_AWS_CREDENTIAL_ACCESSKEY=__##YOUR_AWS_ACCESS_KEY##__
       - TOPOSOID_AWS_CREDINTIAL_SECRETKEY=__##YOUR_AWS_SECRET_KEY##__
@@ -10,7 +10,7 @@ services:
     tty: true
 
   scala-data-accessor-neo4j-web:
-    image: toposoid/scala-data-accessor-neo4j-web:0.6-SNAPSHOT
+    image: toposoid/scala-data-accessor-neo4j-web:0.6
     environment:
       - PRIVATE_IP_ADDRESS=scala-data-accessor-neo4j-web
       - TOPOSOID_GRAPHDB_HOST=neo4j
