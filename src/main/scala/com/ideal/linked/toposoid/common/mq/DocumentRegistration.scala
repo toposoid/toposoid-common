@@ -15,14 +15,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ideal.linked.toposoid.common
+package com.ideal.linked.toposoid.common.mq
 
+import com.ideal.linked.toposoid.common.TransversalState
+import com.ideal.linked.toposoid.knowledgebase.document.model.Document
+import play.api.libs.json.{Json, OWrites, Reads}
 
-sealed abstract class FeatureType(val index: Int)
-final case object SENTENCE extends FeatureType(0)
-final case object IMAGE extends FeatureType(1)
-final case object TABLE extends FeatureType(2)
-final case object SYNONYM extends FeatureType(3)
-final case object PREDICATE_ARGUMENT extends FeatureType(4)
-final case object DOCUMENT extends FeatureType(5)
-final case object NON_SENTENCE extends FeatureType(6)
+case class DocumentRegistration(document:Document, transversalState:TransversalState)
+object DocumentRegistration {
+  implicit val jsonWrites: OWrites[DocumentRegistration] = Json.writes[DocumentRegistration]
+  implicit val jsonReads: Reads[DocumentRegistration] = Json.reads[DocumentRegistration]
+}
+

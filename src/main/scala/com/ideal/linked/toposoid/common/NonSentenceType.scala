@@ -17,12 +17,9 @@
 
 package com.ideal.linked.toposoid.common
 
-
-sealed abstract class FeatureType(val index: Int)
-final case object SENTENCE extends FeatureType(0)
-final case object IMAGE extends FeatureType(1)
-final case object TABLE extends FeatureType(2)
-final case object SYNONYM extends FeatureType(3)
-final case object PREDICATE_ARGUMENT extends FeatureType(4)
-final case object DOCUMENT extends FeatureType(5)
-final case object NON_SENTENCE extends FeatureType(6)
+sealed abstract class NonSentenceType(val index: Int)
+final case object UNSPECIFIED extends NonSentenceType(0)
+final case object REFERENCES extends NonSentenceType(1)
+final case object TABLE_OF_CONTENTS extends NonSentenceType(2)
+final case object HEADLINES extends NonSentenceType(3)
+final case object TITLE_OF_TOP_PAGE extends NonSentenceType(4)
