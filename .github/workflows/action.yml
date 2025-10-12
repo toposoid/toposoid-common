@@ -22,11 +22,11 @@ jobs:
             cd ${GITHUB_WORKSPACE} && cd ../
             cd ./${{ env.PJ_REPO }}
             docker build --build-arg TARGET_BRANCH=${{ env.PJ_BRANCH }} --tag ${{ env.PJ_REPO }}:${{ env.PJ_VERSION }} -f Dockerfile-workflow .
-            docker run --name ${{ env.PJ_REPO }}-${{ env.PJ_VERSION }} --detach -e AKKA_TOKEN=${{secrets.AKKA_TOKEN}} -it ${{ env.PJ_REPO }}:${{ env.PJ_VERSION }} /bin/bash        
-            docker exec -T ${{ env.PJ_REPO }}-${{ env.PJ_VERSION }} bash -c "cd ${{ env.PJ_REPO }} && sbt headerCheck"
-            docker exec -T ${{ env.PJ_REPO }}-${{ env.PJ_VERSION }} bash -c "cd ${{ env.PJ_REPO }} && sbt test:headerCheck"
-            docker exec -T ${{ env.PJ_REPO }}-${{ env.PJ_VERSION }} bash -c "cd ${{ env.PJ_REPO }} && sbt compile"
-            docker exec -T ${{ env.PJ_REPO }}-${{ env.PJ_VERSION }} bash -c "cd ${{ env.PJ_REPO }} && sbt test"
+            docker run --name ${{ env.PJ_REPO }}-${{ env.PJ_VERSION }} --detach -e AKKA_TOKEN=${{secrets.AKKA_TOKEN}} -i ${{ env.PJ_REPO }}:${{ env.PJ_VERSION }} /bin/bash        
+            docker exec ${{ env.PJ_REPO }}-${{ env.PJ_VERSION }} bash -c "cd ${{ env.PJ_REPO }} && sbt headerCheck"
+            docker exec ${{ env.PJ_REPO }}-${{ env.PJ_VERSION }} bash -c "cd ${{ env.PJ_REPO }} && sbt test:headerCheck"
+            docker exec ${{ env.PJ_REPO }}-${{ env.PJ_VERSION }} bash -c "cd ${{ env.PJ_REPO }} && sbt compile"
+            docker exec ${{ env.PJ_REPO }}-${{ env.PJ_VERSION }} bash -c "cd ${{ env.PJ_REPO }} && sbt test"
       - name: Clone toposoid-scala-lib
         uses: actions/checkout@v3
         with:
