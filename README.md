@@ -5,10 +5,13 @@ Toposoid is a knowledge base construction platform.(see [Toposoid　Root Project
 [![Unit Test](https://github.com/toposoid/toposoid-common/actions/workflows/action.yml/badge.svg)](https://github.com/toposoid/toposoid-common/actions/workflows/action.yml)
 
 ## Requirements
-Scala version 2.13.x,   
+Scala version 3.3.6,   
 Sbt version 1.9.0
 
 ## Setup
+The Akka dependencies are available from Akka’s secure library repository. 
+To access them you need to use a secure, tokenized URL as specified at https://account.akka.io/token.
+Set the obtained token to the environment variable TOPOSOID_AKKA_TOKEN
 sbt publishLocal
 
 ## Usage

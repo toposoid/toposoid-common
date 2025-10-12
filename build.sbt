@@ -1,22 +1,26 @@
 import Dependencies._
 import de.heikoseeberger.sbtheader.License
 
-ThisBuild / scalaVersion     := "2.13.11"
+ThisBuild / scalaVersion     := "3.3.6"
 ThisBuild / version          := "0.7-SNAPSHOT"
 ThisBuild / organization     := "com.ideal.linked"
 
+val AkkaVersion = "2.10.9"
+val AkkaHttpVersion = "10.5.2"
+val AkkaToken = sys.env.get("TOPOSOID_AKKA_TOKEN")
 lazy val root = (project in file("."))
   .settings(
     name := "toposoid-common",
-    libraryDependencies += "com.typesafe.akka" %% "akka-http-spray-json" % "10.1.15",
-    libraryDependencies += "com.typesafe.akka" %% "akka-stream" % "2.5.31",
-    libraryDependencies += "com.typesafe.play" %% "play" % "2.8.18",
+    resolvers in ThisBuild += "akka-secure-mvn" at "https://repo.akka.io/" + AkkaToken + "/secure",
+    resolvers in ThisBuild += Resolver.url("akka-secure-ivy", url("https://repo.akka.io/" + AkkaToken  + "/secure"))(Resolver.ivyStylePatterns),
+    libraryDependencies += "com.typesafe.akka" %% "akka-http-spray-json" % "10.7.2",
+    libraryDependencies += "com.typesafe.akka" %% "akka-stream" % AkkaVersion,
+    libraryDependencies += "org.playframework" %% "play" % "3.0.9",
     libraryDependencies += "com.ideal.linked" %% "scala-common" % "0.7-SNAPSHOT",
     libraryDependencies += "com.ideal.linked" %% "toposoid-knowledgebase-model" % "0.7-SNAPSHOT",
     libraryDependencies += "com.ideal.linked" %% "toposoid-deduction-protocol-model" % "0.7-SNAPSHOT",
-    libraryDependencies += "com.lightbend.akka" %% "akka-stream-alpakka-sqs" % "2.0.2",
-    libraryDependencies += "io.jvm.uuid" %% "scala-uuid" % "0.3.1",
-    libraryDependencies +=   "com.softwaremill.sttp.client4" %% "core" % "4.0.9",
+    libraryDependencies += "com.lightbend.akka" %% "akka-stream-alpakka-sqs" % "9.0.2",
+    libraryDependencies += "com.softwaremill.sttp.client4" %% "core" % "4.0.12",
     libraryDependencies += scalaTest % Test
   )
   .enablePlugins(AutomateHeaderPlugin)
