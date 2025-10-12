@@ -23,7 +23,7 @@ import com.ideal.linked.toposoid.knowledgebase.regist.model.{Knowledge, Knowledg
 import com.ideal.linked.toposoid.protocol.model.base.{AnalyzedSentenceObject, CoveredPropositionResult, DeductionResult}
 import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
 import com.typesafe.scalalogging.LazyLogging
-import io.jvm.uuid.UUID
+//import io.jvm.uuid.UUID
 
 import scala.util.matching.Regex
 import scala.util.{Failure, Success, Try}
@@ -201,22 +201,22 @@ object ToposoidUtils extends LazyLogging{
     val knowledgeForImages: List[KnowledgeForImage] = knowledge.knowledgeForImages.map(y => {
       Option(y.id) match {
         case Some(x) => {
-          if (x.trim().equals("")) KnowledgeForImage(UUID.random.toString, y.imageReference)
+          if (x.trim().equals("")) KnowledgeForImage(java.util.UUID.randomUUID().toString, y.imageReference)
           else y
         }
         case None => {
-          KnowledgeForImage(UUID.random.toString, y.imageReference)
+          KnowledgeForImage(java.util.UUID.randomUUID().toString, y.imageReference)
         }
       }
     })
     val knowledgeForTables: List[KnowledgeForTable] = knowledge.knowledgeForTables.map(y => {
       Option(y.id) match {
         case Some(x) => {
-          if (x.trim().equals("")) KnowledgeForTable(UUID.random.toString, y.tableReference)
+          if (x.trim().equals("")) KnowledgeForTable(java.util.UUID.randomUUID().toString, y.tableReference)
           else y
         }
         case None => {
-          KnowledgeForTable(UUID.random.toString, y.tableReference)
+          KnowledgeForTable(java.util.UUID.randomUUID().toString, y.tableReference)
         }
       }
     })
@@ -224,9 +224,9 @@ object ToposoidUtils extends LazyLogging{
   }
 
   def assignId(knowledgeSentenceSet: KnowledgeSentenceSet): (KnowledgeSentenceSetForParser, String) = {
-    val propositionId = UUID.random.toString
-    val knowledgeForParserPremise: List[KnowledgeForParser] = knowledgeSentenceSet.premiseList.map(x => KnowledgeForParser(propositionId, UUID.random.toString, convertKnowledge(x)))
-    val knowledgeForParserClaim: List[KnowledgeForParser] = knowledgeSentenceSet.claimList.map(x => KnowledgeForParser(propositionId, UUID.random.toString, convertKnowledge(x)))
+    val propositionId = java.util.UUID.randomUUID().toString
+    val knowledgeForParserPremise: List[KnowledgeForParser] = knowledgeSentenceSet.premiseList.map(x => KnowledgeForParser(propositionId, java.util.UUID.randomUUID().toString, convertKnowledge(x)))
+    val knowledgeForParserClaim: List[KnowledgeForParser] = knowledgeSentenceSet.claimList.map(x => KnowledgeForParser(propositionId, java.util.UUID.randomUUID().toString, convertKnowledge(x)))
 
     (KnowledgeSentenceSetForParser(
       premiseList = knowledgeForParserPremise,

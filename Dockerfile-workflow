@@ -1,9 +1,11 @@
-FROM toposoid/scala-base:2.13.11
+FROM toposoid/scala-base:3.3.6
 
 WORKDIR /app
 
 ARG TARGET_BRANCH
+ARG AKKA_TOKEN
 ENV DEPLOYMENT=local
+ENV ${AKKA_TOKEN}
 
 RUN apt-get update \
 && apt-get -y install git \

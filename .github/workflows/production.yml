@@ -13,7 +13,7 @@ env:
   PJ_VERSION: 0.6
 jobs:
   unit-test_toposoid-common:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Clone ${{ env.PJ_REPO }}
         uses: actions/checkout@v3
@@ -23,7 +23,7 @@ jobs:
         run: |
             cd ${GITHUB_WORKSPACE} && cd ../
             cd ./${{ env.PJ_REPO }}
-            docker build --build-arg TARGET_BRANCH=${{ env.PJ_BRANCH }} --tag ${{ env.PJ_REPO }}:${{ env.PJ_VERSION }} -f Dockerfile-workflow .
+            docker build --build-arg TARGET_BRANCH=${{ env.PJ_BRANCH }} --build-arg AKKA_TOKEN=${{AKKA_TOKEN}} --tag ${{ env.PJ_REPO }}:${{ env.PJ_VERSION }} -f Dockerfile-workflow .
             docker compose -f docker-compose-workflow.yml up -d
             docker compose -f docker-compose-workflow.yml exec -T ${{ env.PJ_REPO }} bash -c "cd ${{ env.PJ_REPO }} && sbt headerCheck"
             docker compose -f docker-compose-workflow.yml exec -T ${{ env.PJ_REPO }} bash -c "cd ${{ env.PJ_REPO }} && sbt test:headerCheck"
