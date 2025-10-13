@@ -24,11 +24,11 @@ jobs:
             cd ${GITHUB_WORKSPACE} && cd ../
             cd ./${{ env.PJ_REPO }}
             docker build --build-arg TARGET_BRANCH=${{ env.PJ_BRANCH }} --tag ${{ env.PJ_REPO }}:${{ env.PJ_VERSION }} -f Dockerfile-workflow .
-            docker compose -f docker-compose-workflow.yml run -e AKKA_TOKEN=${{secrets.AKKA_TOKEN}}　-d
-            docker compose -f docker-compose-workflow.yml exec -T ${{ env.PJ_REPO }} bash -c "cd ${{ env.PJ_REPO }} && sbt headerCheck"
-            docker compose -f docker-compose-workflow.yml exec -T ${{ env.PJ_REPO }} bash -c "cd ${{ env.PJ_REPO }} && sbt test:headerCheck"
-            docker compose -f docker-compose-workflow.yml exec -T ${{ env.PJ_REPO }} bash -c "cd ${{ env.PJ_REPO }} && sbt compile"
-            docker compose -f docker-compose-workflow.yml exec -T ${{ env.PJ_REPO }} bash -c "cd ${{ env.PJ_REPO }} && sbt test"
+            docker run --name ${{ env.PJ_REPO }} --detach -e TOPOSOID_AKKA_TOKEN=${{secrets.AKKA_TOKEN}} -i ${{ env.PJ_REPO }}:${{ env.PJ_VERSION }} /bin/bash        
+            docker exec -t ${{ env.PJ_REPO }} bash -c "cd ${{ env.PJ_REPO }} && sbt headerCheck"
+            docker exec -t ${{ env.PJ_REPO }} bash -c "cd ${{ env.PJ_REPO }} && sbt test:headerCheck"
+            docker exec -t ${{ env.PJ_REPO }} bash -c "cd ${{ env.PJ_REPO }} && sbt compile"
+            docker exec -t ${{ env.PJ_REPO }} bash -c "cd ${{ env.PJ_REPO }} && sbt test"
       - name: Clone toposoid-scala-lib
         uses: actions/checkout@v3
         with:
@@ -53,6 +53,7 @@ jobs:
           tags: toposoid/toposoid-scala-lib-base:${{ env.PJ_VERSION }}
           build-args: |
             TARGET_BRANCH=${{ env.PJ_BRANCH }}
+            AKKA_TOKEN=${{secrets.AKKA_TOKEN}}
       - name: Build And Push Docker Image
         uses: docker/build-push-action@v3
         with:
