@@ -1,6 +1,7 @@
 version: '3'
 services:
   toposoid-common:
-    image: toposoid-common:0.7-SNAPSHOT
+    image: toposoid-common:0.0.7-SNAPSHOT
+    container_name: toposoid-common
     tty: true
 
