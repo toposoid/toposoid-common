@@ -7,7 +7,7 @@ ThisBuild / organization     := "com.ideal.linked"
 
 val AkkaVersion = "2.10.9"
 val AkkaHttpVersion = "10.5.2"
-val AkkaToken = sys.env.get("TOPOSOID_AKKA_TOKEN")
+val AkkaToken = sys.env.get("TOPOSOID_AKKA_TOKEN").get
 lazy val root = (project in file("."))
   .settings(
     name := "toposoid-common",
