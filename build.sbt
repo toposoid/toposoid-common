@@ -11,8 +11,8 @@ val AkkaToken = sys.env.get("TOPOSOID_AKKA_TOKEN")
 lazy val root = (project in file("."))
   .settings(
     name := "toposoid-common",
-    resolvers in ThisBuild += "akka-secure-mvn" at "https://repo.akka.io/" + AkkaToken + "/secure",
-    resolvers in ThisBuild += Resolver.url("akka-secure-ivy", url("https://repo.akka.io/" + AkkaToken  + "/secure"))(Resolver.ivyStylePatterns),
+    resolvers += "akka-secure-mvn" at "https://repo.akka.io/" + AkkaToken + "/secure",
+    resolvers += Resolver.url("akka-secure-ivy", url("https://repo.akka.io/" + AkkaToken  + "/secure"))(Resolver.ivyStylePatterns),
     libraryDependencies += "com.typesafe.akka" %% "akka-http-spray-json" % "10.7.2",
     libraryDependencies += "com.typesafe.akka" %% "akka-stream" % AkkaVersion,
     libraryDependencies += "org.playframework" %% "play" % "3.0.9",
