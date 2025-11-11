@@ -5,3 +5,9 @@ project/target/
 *.class
 *.log
 .bsp/
+.devcontainer/
+.metals/
+.vscode/
+docker-compose-dev.yml
+project/metals.sbt
+project/project
