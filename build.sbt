@@ -5,8 +5,8 @@ ThisBuild / scalaVersion     := "3.3.6"
 ThisBuild / version          := "0.7-SNAPSHOT"
 ThisBuild / organization     := "com.ideal.linked"
 
-val AkkaVersion = "2.10.9"
-val AkkaHttpVersion = "10.5.2"
+val AkkaVersion = "2.10.11"
+val AkkaHttpVersion = "10.7.3"
 val AkkaToken = sys.env.get("TOPOSOID_AKKA_TOKEN").get
 lazy val root = (project in file("."))
   .settings(
@@ -21,7 +21,7 @@ lazy val root = (project in file("."))
     libraryDependencies += "com.ideal.linked" %% "scala-common" % "0.7-SNAPSHOT",
     libraryDependencies += "com.ideal.linked" %% "toposoid-knowledgebase-model" % "0.7-SNAPSHOT",
     libraryDependencies += "com.ideal.linked" %% "toposoid-deduction-protocol-model" % "0.7-SNAPSHOT",
-    libraryDependencies += "com.lightbend.akka" %% "akka-stream-alpakka-sqs" % "9.0.2",
+    libraryDependencies += "com.lightbend.akka" %% "akka-stream-alpakka-sqs" % "10.0.0",
     libraryDependencies += "com.softwaremill.sttp.client4" %% "core" % "4.0.12",
     libraryDependencies += scalaTest % Test
   )
