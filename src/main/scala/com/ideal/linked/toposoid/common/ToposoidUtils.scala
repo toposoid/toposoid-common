@@ -245,11 +245,12 @@ object ToposoidUtils extends LazyLogging{
 
     val localContext = LocalContext(
       lang = knowledgeForParser.knowledge.lang,
-      namedEntity = "",
+      namedEntities = Map.empty[String, String],
       rangeExpressions = Map.empty[String, Map[String, String]],
       categories = Map.empty[String, String],
       domains = Map.empty[String, String],
-      knowledgeFeatureReferences = List.empty[KnowledgeFeatureReference]
+      knowledgeFeatureReferences = List.empty[KnowledgeFeatureReference],
+      properNouns = Map.empty[String, String]
     )
 
     val caseType = "-"
@@ -269,7 +270,10 @@ object ToposoidUtils extends LazyLogging{
       modalityType = "-",
       parallelType = "-",
       nodeType = 1,
-      morphemes = List("-")
+      morphemes = List("-"),
+      caseGroupType = -1,
+      casePhraseId = "",
+      casePhrase = ""
     )
 
     val node = KnowledgeBaseNode(
