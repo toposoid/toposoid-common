@@ -11,3 +11,4 @@ project/target/
 docker-compose-dev.yml
 project/metals.sbt
 project/project
+.bloop
