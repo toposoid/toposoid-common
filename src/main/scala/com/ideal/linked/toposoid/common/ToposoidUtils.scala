@@ -32,6 +32,7 @@ import play.api.libs.json.Json
 import sttp.model.HttpVersion
 
 import scala.concurrent.duration.{Duration, DurationInt}
+import scala.util.boundary, boundary.break
 
 /*
 import akka.actor.ActorSystem
@@ -93,17 +94,17 @@ object ToposoidUtils extends LazyLogging{
    */
   def getNodeType(sentenceType:Int, scopeType: Int, featureType: Int): String = Try{
     (sentenceType, scopeType, featureType) match{
-      case (PREMISE.index, LOCAL.index, PREDICATE_ARGUMENT.index) => "PremiseNode"
-      case (CLAIM.index, LOCAL.index, PREDICATE_ARGUMENT.index) => "ClaimNode"
-      case (PREMISE.index, SEMIGLOBAL.index, SENTENCE.index) => "SemiGlobalPremiseNode"
-      case (CLAIM.index, SEMIGLOBAL.index, SENTENCE.index) => "SemiGlobalClaimNode"
-      case (PREMISE.index, GLOBAL.index, DOCUMENT.index) => "GlobalPremiseNode"
-      case (CLAIM.index, GLOBAL.index, DOCUMENT.index) => "GlobalClaimNode"
+      case (SentenceType.PREMISE.index, ScopeType.LOCAL.index, FeatureType.PREDICATE_ARGUMENT.index) => "PremiseNode"
+      case (SentenceType.CLAIM.index, ScopeType.LOCAL.index, FeatureType.PREDICATE_ARGUMENT.index) => "ClaimNode"
+      case (SentenceType.PREMISE.index, ScopeType.SEMIGLOBAL.index, FeatureType.SENTENCE.index) => "SemiGlobalPremiseNode"
+      case (SentenceType.CLAIM.index, ScopeType.SEMIGLOBAL.index, FeatureType.SENTENCE.index) => "SemiGlobalClaimNode"
+      case (SentenceType.PREMISE.index, ScopeType.GLOBAL.index, FeatureType.DOCUMENT.index) => "GlobalPremiseNode"
+      case (SentenceType.CLAIM.index, ScopeType.GLOBAL.index, FeatureType.DOCUMENT.index) => "GlobalClaimNode"
       case _ => {
           featureType match {
-            case SYNONYM.index => "SynonymNode"
-            case IMAGE.index => "ImageNode"
-            case TABLE.index => "TableNode"
+            case FeatureType.SYNONYM.index => "SynonymNode"
+            case FeatureType.IMAGE.index => "ImageNode"
+            case FeatureType.TABLE.index => "TableNode"
             case _ => throw new Exception("Unknown NodeType")
           }
       }
@@ -115,15 +116,23 @@ object ToposoidUtils extends LazyLogging{
 
 
   def callComponent(json:String, host:String, port:String, serviceName:String, transversalState:TransversalState): String =Try {
-    val retryNum =  conf.getInt("retryCallMicroserviceNum") -1
-    for (i <- 0 to retryNum) {
-      val result:String  = this.callComponentImpl(json, host, port, serviceName, transversalState)
-      if (result != "{}") {
-        return result
+    
+    val result:List[String] = Range(0, conf.getInt("retryCallMicroserviceNum")).foldLeft(List("{}")){
+      (acc, x) => {
+        val latestResult:String = acc.last
+        latestResult match  {
+          case "{}" => {
+            acc :+ this.callComponentImpl(json, host, port, serviceName, transversalState)
+          } 
+          case _ => {
+            acc            
+          }
+        } 
       }
-      if(i == retryNum) throw new Exception("Results were not returned properly")
     }
-    ""
+    if(result.last == "{}") throw new Exception("Results were not returned properly")
+    result.last
+
   }match {
     case Success(s) => s
     case Failure(e) => throw e

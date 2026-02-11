@@ -18,12 +18,12 @@
 package com.ideal.linked.toposoid.common
 
 
-sealed abstract class FeatureType(val index: Int)
-final case object SENTENCE extends FeatureType(0)
-final case object IMAGE extends FeatureType(1)
-final case object TABLE extends FeatureType(2)
-final case object SYNONYM extends FeatureType(3)
-final case object PREDICATE_ARGUMENT extends FeatureType(4)
-final case object DOCUMENT extends FeatureType(5)
-final case object NON_SENTENCE extends FeatureType(6)
-final case object CASE_PHRASE extends FeatureType(7)
+enum FeatureType(val index: Int):
+    case SENTENCE extends FeatureType(0)
+    case IMAGE extends FeatureType(1)
+    case TABLE extends FeatureType(2)
+    case SYNONYM extends FeatureType(3)
+    case PREDICATE_ARGUMENT extends FeatureType(4)
+    case DOCUMENT extends FeatureType(5)
+    case NON_SENTENCE extends FeatureType(6)
+    case CASE_PHRASE extends FeatureType(7)
