@@ -19,7 +19,8 @@ package com.ideal.linked.toposoid.common
 
 
 enum CaseGroupType(val index: Int):
-  case PredicateTerm  extends CaseGroupType(0)
-  case SubjectTerm extends CaseGroupType(1)
-  case ObjectTerm extends CaseGroupType(2)
+  case UNSPECIFIED  extends CaseGroupType(0)
+  case PREDICATE_GROUP  extends CaseGroupType(1)
+  case SUBJECT_GROUP extends CaseGroupType(2)
+  case OBJECT_GROUP extends CaseGroupType(3)
 

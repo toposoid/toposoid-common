@@ -32,6 +32,7 @@ import play.api.libs.json.Json
 import sttp.model.HttpVersion
 
 import scala.concurrent.duration.{Duration, DurationInt}
+
 /*
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -271,7 +272,7 @@ object ToposoidUtils extends LazyLogging{
       parallelType = "-",
       nodeType = 1,
       morphemes = List("-"),
-      caseGroupType = -1,
+      caseGroupType = CaseGroupType.UNSPECIFIED.index,
       casePhraseId = "",
       casePhrase = ""
     )
