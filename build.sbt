@@ -5,12 +5,16 @@ ThisBuild / scalaVersion     := "3.3.6"
 ThisBuild / version          := "0.7-SNAPSHOT"
 ThisBuild / organization     := "com.ideal.linked"
 
-val AkkaVersion = "2.10.11"
-val AkkaHttpVersion = "10.7.3"
-val AkkaToken = sys.env.get("TOPOSOID_AKKA_TOKEN").get
+//val AkkaVersion = "2.10.11"
+//val AkkaHttpVersion = "10.7.3"
+//val AkkaToken = sys.env.get("TOPOSOID_AKKA_TOKEN").get
+val PekkoVersion = "1.1.5"
+val PekkoHttpVersion = "1.1.0"
+
 lazy val root = (project in file("."))
   .settings(
     name := "toposoid-common",
+    /*
     resolvers += "akka-secure-mvn" at "https://repo.akka.io/" + AkkaToken + "/secure",
     resolvers += Resolver.url("akka-secure-ivy", url("https://repo.akka.io/" + AkkaToken  + "/secure"))(Resolver.ivyStylePatterns),
     libraryDependencies += "com.typesafe.akka" %% "akka-http" % AkkaHttpVersion,
@@ -18,12 +22,16 @@ lazy val root = (project in file("."))
     libraryDependencies += "com.typesafe.akka" %% "akka-stream" % AkkaVersion,
     libraryDependencies += "com.typesafe.akka" %% "akka-pki" % AkkaVersion,
     libraryDependencies += "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,    
-    libraryDependencies += "org.playframework" %% "play" % "3.0.7",
-    libraryDependencies += "com.ideal.linked" %% "scala-common" % "0.7-SNAPSHOT",
-    libraryDependencies += "com.ideal.linked" %% "toposoid-knowledgebase-model" % "0.7-SNAPSHOT",
-    libraryDependencies += "com.ideal.linked" %% "toposoid-deduction-protocol-model" % "0.7-SNAPSHOT",
     libraryDependencies += "com.lightbend.akka" %% "akka-stream-alpakka-sqs" % "10.0.0",
-    libraryDependencies += "com.softwaremill.sttp.client4" %% "core" % "4.0.12",
+    */
+    libraryDependencies += "org.playframework" %% "play" % "3.0.7" exclude("org.slf4j","slf4j-api"),
+    libraryDependencies += "com.ideal.linked" %% "scala-common" % "0.7-SNAPSHOT" exclude("org.slf4j","slf4j-api"),
+    libraryDependencies += "com.ideal.linked" %% "toposoid-knowledgebase-model" % "0.7-SNAPSHOT" exclude("org.slf4j","slf4j-api"),
+    libraryDependencies += "com.ideal.linked" %% "toposoid-deduction-protocol-model" % "0.7-SNAPSHOT" exclude("org.slf4j","slf4j-api"),    
+    libraryDependencies += "org.apache.pekko" %% "pekko-connectors-sqs" % "1.2.0" exclude("org.slf4j","slf4j-api"),
+    libraryDependencies += "org.apache.pekko" %% "pekko-http" % PekkoHttpVersion exclude("org.slf4j","slf4j-api"),
+    libraryDependencies += "com.softwaremill.sttp.client4" %% "core" % "4.0.12" exclude("org.slf4j","slf4j-api"),
+    libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.36",
     libraryDependencies += scalaTest % Test
   )
   .enablePlugins(AutomateHeaderPlugin)

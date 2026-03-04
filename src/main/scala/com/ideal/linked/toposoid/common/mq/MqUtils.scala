@@ -17,14 +17,16 @@
 
 package com.ideal.linked.toposoid.common.mq
 
-import akka.actor.ActorSystem
-import com.github.matsluni.akkahttpspi.AkkaHttpClient
+//import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
+//import com.github.matsluni.akkahttpspi.AkkaHttpClient
 import com.ideal.linked.common.DeploymentConverter.conf
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest
 import java.net.URI
+import org.apache.pekko.stream.connectors.awsspi.PekkoHttpClient
 
 object MqUtils {
   def publishMessage(json: String, mqHost: String, mqPort: String, queueName: String, region: Region = Region.AP_NORTHEAST_1): Unit = {
@@ -43,8 +45,7 @@ object MqUtils {
       )
       .endpointOverride(URI.create(testEndPoint)) // (2)
       .region(region)
-      .httpClient(AkkaHttpClient.builder()
-        .withActorSystem(actorSystem).build())
+      .httpClient(PekkoHttpClient.builder().withActorSystem(actorSystem).build())
       .build()
 
     sqs.sendMessage(
