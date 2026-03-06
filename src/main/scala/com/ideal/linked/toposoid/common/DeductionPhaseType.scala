@@ -15,6 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+package com.ideal.linked.toposoid.common
+
 enum DeductionPhaseType(val index: Int) {
   case DEDUCTION_TERM_BASE extends DeductionPhaseType(1)
   case DEDUCTION_PHRASE_BASE extends DeductionPhaseType(2)
