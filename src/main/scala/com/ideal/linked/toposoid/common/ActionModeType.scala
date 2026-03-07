@@ -18,6 +18,7 @@
 package com.ideal.linked.toposoid.common
 
 enum ActionModeType(val index: Int) {
+  case UNSPECIFIED  extends ActionModeType(0)
   case REGISTRATION_MODE extends ActionModeType(1)
   case DEDUCTION_MODE extends ActionModeType(2)
 }
