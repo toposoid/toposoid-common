@@ -14,16 +14,6 @@ val PekkoHttpVersion = "1.1.0"
 lazy val root = (project in file("."))
   .settings(
     name := "toposoid-common",
-    /*
-    resolvers += "akka-secure-mvn" at "https://repo.akka.io/" + AkkaToken + "/secure",
-    resolvers += Resolver.url("akka-secure-ivy", url("https://repo.akka.io/" + AkkaToken  + "/secure"))(Resolver.ivyStylePatterns),
-    libraryDependencies += "com.typesafe.akka" %% "akka-http" % AkkaHttpVersion,
-    libraryDependencies += "com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion,
-    libraryDependencies += "com.typesafe.akka" %% "akka-stream" % AkkaVersion,
-    libraryDependencies += "com.typesafe.akka" %% "akka-pki" % AkkaVersion,
-    libraryDependencies += "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,    
-    libraryDependencies += "com.lightbend.akka" %% "akka-stream-alpakka-sqs" % "10.0.0",
-    */
     libraryDependencies += "org.playframework" %% "play" % "3.0.7" exclude("org.slf4j","slf4j-api"),
     libraryDependencies += "com.ideal.linked" %% "scala-common" % "0.7-SNAPSHOT" exclude("org.slf4j","slf4j-api"),
     libraryDependencies += "com.ideal.linked" %% "toposoid-knowledgebase-model" % "0.7-SNAPSHOT" exclude("org.slf4j","slf4j-api"),
