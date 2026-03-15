@@ -33,6 +33,7 @@ import sttp.model.HttpVersion
 
 import scala.concurrent.duration.{Duration, DurationInt}
 import scala.util.boundary, boundary.break
+import com.ideal.linked.toposoid.protocol.model.base.KnowledgeBaseSideInfo
 
 /*
 import akka.actor.ActorSystem
@@ -309,8 +310,11 @@ object ToposoidUtils extends LazyLogging{
       localContextForFeature = localContextForFeature,
     )
 
-    val defaultDeductionResult = DeductionResult(status = false,
-      coveredPropositionResults = List.empty[CoveredPropositionResult]
+    val defaultDeductionResult = DeductionResult(
+      status = false,
+      authenticityType = AuthenticityType.UNKNOWN.index,
+      coveredPropositionResults = List.empty[CoveredPropositionResult],
+      evidenceKnowledgeList = List.empty[KnowledgeBaseSideInfo]
     )
     AnalyzedSentenceObject(
       nodeMap = nodeMap,
