@@ -20,7 +20,7 @@ package com.ideal.linked.toposoid.common
 import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode, KnowledgeBaseSemiGlobalNode, KnowledgeFeatureReference, LocalContext, LocalContextForFeature, PredicateArgumentStructure}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{Knowledge, KnowledgeForImage, KnowledgeForTable, KnowledgeSentenceSet}
-import com.ideal.linked.toposoid.protocol.model.base.{AnalyzedSentenceObject, CoveredPropositionResult, DeductionResult}
+import com.ideal.linked.toposoid.protocol.model.base.{AnalyzedSentenceObject, DeductionResult}
 import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
 import com.typesafe.scalalogging.LazyLogging
 //import io.jvm.uuid.UUID
@@ -34,6 +34,7 @@ import sttp.model.HttpVersion
 import scala.concurrent.duration.{Duration, DurationInt}
 import scala.util.boundary, boundary.break
 import com.ideal.linked.toposoid.protocol.model.base.KnowledgeBaseSideInfo
+import com.ideal.linked.toposoid.protocol.model.base.CoveredPropositionEdge
 
 /*
 import akka.actor.ActorSystem
@@ -313,7 +314,7 @@ object ToposoidUtils extends LazyLogging{
     val defaultDeductionResult = DeductionResult(
       status = false,
       authenticityType = AuthenticityType.UNKNOWN.index,
-      coveredPropositionResults = List.empty[CoveredPropositionResult],
+      coveredPropositionEdges = List.empty[CoveredPropositionEdge],
       evidenceKnowledgeList = List.empty[KnowledgeBaseSideInfo]
     )
     AnalyzedSentenceObject(
