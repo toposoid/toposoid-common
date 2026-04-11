@@ -20,6 +20,7 @@ package com.ideal.linked.toposoid.common
 import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
 import play.api.libs.json.Json
+import scala.util.{Failure, Success, Try}
 
 trait Neo4JUtils {
   def executeQuery(query: String, transversalState: TransversalState): Unit
@@ -40,5 +41,41 @@ class Neo4JUtilsImpl extends Neo4JUtils {
     val json = s"""{ "query":"$convertQuery", "target": "" }"""
     val jsonResult = ToposoidUtils.callComponent(json, conf.getString("TOPOSOID_GRAPHDB_WEB_HOST"), conf.getString("TOPOSOID_GRAPHDB_WEB_PORT"), "getQueryFormattedResult", transversalState)
     Json.parse(jsonResult).as[Neo4jRecords]
+  }
+
+
+  def getCypherQueryResult(query:String, target:String, transversalState:TransversalState): String = Try{
+    val retryNum =  conf.getInt("retryCallMicroserviceNum") -1
+
+    val json: Option[String] = (0 to retryNum).toList.foldLeft(Option.empty[String]){
+      (opt, i) => {
+        opt match {
+          case Some(v) => opt
+          case None    => {
+            val json = """{ "query":"%s", "target":"%s" }""".format(ToposoidUtils.encodeJsonInJson(query), target)      
+            val result:String = ToposoidUtils.callComponent(
+              json,
+              conf.getString("TOPOSOID_GRAPHDB_WEB_HOST"),
+              conf.getString("TOPOSOID_GRAPHDB_WEB_PORT"),
+              "getQueryFormattedResult",
+              transversalState
+            )
+            if(result != "{}") {
+              Option(result)
+            }else{
+              None
+            } 
+          }
+        }
+      }
+    }
+    json match {
+      case Some(v) => v
+      case None => throw new Exception("Results were not returned properly")
+    }
+
+  }match {
+      case Success(s) => s
+      case Failure(e) => throw e
   }
 }
