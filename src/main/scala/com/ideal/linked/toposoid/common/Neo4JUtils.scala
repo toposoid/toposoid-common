@@ -53,13 +53,7 @@ class Neo4JUtilsImpl extends Neo4JUtils {
           case Some(v) => opt
           case None    => {
             val json = """{ "query":"%s", "target":"%s" }""".format(ToposoidUtils.encodeJsonInJson(query), target)      
-            val result:String = ToposoidUtils.callComponent(
-              json,
-              conf.getString("TOPOSOID_GRAPHDB_WEB_HOST"),
-              conf.getString("TOPOSOID_GRAPHDB_WEB_PORT"),
-              "getQueryFormattedResult",
-              transversalState
-            )
+            val result:String = ToposoidUtils.callComponent(json, conf.getString("TOPOSOID_GRAPHDB_WEB_HOST"), conf.getString("TOPOSOID_GRAPHDB_WEB_PORT"), "getQueryFormattedResult",transversalState)
             if(result != "{}") {
               Option(result)
             }else{
@@ -73,7 +67,6 @@ class Neo4JUtilsImpl extends Neo4JUtils {
       case Some(v) => v
       case None => throw new Exception("Results were not returned properly")
     }
-
   }match {
       case Success(s) => s
       case Failure(e) => throw e
