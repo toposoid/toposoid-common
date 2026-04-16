@@ -29,29 +29,30 @@ import com.ideal.linked.toposoid.protocol.model.base.KnowledgeBaseSideInfo
 import com.ideal.linked.toposoid.protocol.model.base.CoveredPropositionNode
 import com.ideal.linked.toposoid.protocol.model.base.CoveredPropositionEdge
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
+import com.ideal.linked.toposoid.knowledgebase.model.KnowledgeBaseSynonymNode
+import com.ideal.linked.toposoid.knowledgebase.model.KnowledgeFeatureReference
 
 object DeductionUtils extends LazyLogging {
 
     def getUnsettledEdges(aso:AnalyzedSentenceObject): List[KnowledgeBaseEdge] = {
+        //TODO:ロジカルエッヂを省けてる？
         val pairSetList = aso.deductionResult.coveredPropositionEdges.foldLeft(List.empty[Set[String]]){
-            (acc, x) => {
-            acc :+ Set(x.sourceNode.terminalId, x.destinationNode.terminalId)
-            }
+        (acc, x) => {
+            if(x.sourceNode.isConfirmed && x.destinationNode.isConfirmed){
+                acc :+ Set(x.sourceNode.terminalId, x.destinationNode.terminalId)
+            }else{
+                acc
+            }        
+        }
         }
         aso.edgeList.filterNot(x => {
-        val targetLink = Set(x.sourceId, x.destinationId)
-        pairSetList.contains(targetLink)
-        })
+            val targetLink = Set(x.sourceId, x.destinationId)
+            pairSetList.contains(targetLink)
+        })    
     }
 
-    def getCoveredPropositionEdge(edge: KnowledgeBaseEdge, sourceAlias:String, destinationAlias:String, nodeMap:Map[String, KnowledgeBaseNode], neo4jRecords: Neo4jRecords, relationMatchState:RelationMatchState):CoveredPropositionEdge = {
-        //一旦どちらかのノードが埋まっていれば推論を進めるものとする。
-        val sourceNodeSurface = nodeMap.get(edge.sourceId).get.asInstanceOf[KnowledgeBaseNode].predicateArgumentStructure.surface
-        val destinationNodeSurface = nodeMap.get(edge.destinationId).get.asInstanceOf[KnowledgeBaseNode].predicateArgumentStructure.surface
-
-        val sourceKnowledgeNodes:List[KnowledgeBaseNode] = neo4jRecords.records.map(x => x.filter(y => y.key == sourceAlias).map(z => z.value.localNode.get)).flatten
-        val destinationKnowledgeNodes:List[KnowledgeBaseNode] = neo4jRecords.records.map(x => x.filter(y => y.key == destinationAlias).map(z => z.value.localNode.get)).flatten
-
+    def getCoveredPropositionEdge(edge: KnowledgeBaseEdge, sourceAlias:String, destinationAlias:String, nodeMap:Map[String, KnowledgeBaseNode], neo4jRecords: Neo4jRecords, relationMatchState:RelationMatchState, deductionUnitName:String):CoveredPropositionEdge = {
+        //一旦どちらかのノードが埋まっていれば推論を進めるものとする。        
         val (isConfirmedSource, isConfirmedDestination)= relationMatchState match {
             case RelationMatchState.MATCHED_BOTH => (true, true)
             case RelationMatchState.MATCHED_SOURCE_NODE_ONLY => (true, false)
@@ -59,56 +60,72 @@ object DeductionUtils extends LazyLogging {
             case RelationMatchState.NOT_MATCHED_BOTH => (false, false)
         } 
 
+        val sourceNodeSurface = nodeMap.get(edge.sourceId).get.asInstanceOf[KnowledgeBaseNode].predicateArgumentStructure.surface
+        val destinationNodeSurface = nodeMap.get(edge.destinationId).get.asInstanceOf[KnowledgeBaseNode].predicateArgumentStructure.surface
+
+        val sourceKnowledgeNodes = neo4jRecords.records.map(x => x.filter(y => y.key == sourceAlias).map(
+        z => List(z.value.localNode, z.value.synonymNode, z.value.featureNode).flatten.head)).flatten
+
+        val destinationKnowledgeNodes = neo4jRecords.records.map(x => x.filter(y => y.key == destinationAlias).map(
+        z => List(z.value.localNode, z.value.synonymNode, z.value.featureNode).flatten.head)).flatten
+
         val sourceMatchedKnowledgeNodes:List[MatchedKnowledgeNode] = sourceAlias match {
-        case "" => {
-            List.empty[MatchedKnowledgeNode]
+            case "" => List.empty[MatchedKnowledgeNode]
+            case _ => getMatchedKnowledgeNodes(edge, sourceKnowledgeNodes, nodeMap.get(edge.sourceId).get, List.empty[MatchedFeatureInfo])
         }
-        case _ => {
-            sourceKnowledgeNodes.map(x => {
-            MatchedKnowledgeNode(
-                propositionId = x.propositionId,
-                sentenceId = x.sentenceId,
-                nodeId = x.nodeId,
-                caseNameOnEdge = edge.caseStr,
-                isDenialWord = x.predicateArgumentStructure.isDenialWord,
-                nodeType = x.predicateArgumentStructure.nodeType,
-                featureInfoList = List.empty[MatchedFeatureInfo]
-                )
-            })
-        }
-        }
+
         val destinationMatchedKnowledgeNodes:List[MatchedKnowledgeNode] = destinationAlias match {
-        case "" => {
-            List.empty[MatchedKnowledgeNode]
-        }
-        case _ => {
-            destinationKnowledgeNodes.map(x => {
-            MatchedKnowledgeNode(
-                propositionId = x.propositionId,
-                sentenceId = x.sentenceId,
-                nodeId = x.nodeId,
-                caseNameOnEdge = edge.caseStr,
-                isDenialWord = x.predicateArgumentStructure.isDenialWord,
-                nodeType = x.predicateArgumentStructure.nodeType,
-                List.empty[MatchedFeatureInfo]
-
-                )
-            })
-        }
+            case "" =>  List.empty[MatchedKnowledgeNode]
+            case _ => getMatchedKnowledgeNodes(edge, destinationKnowledgeNodes, nodeMap.get(edge.destinationId).get, List.empty[MatchedFeatureInfo])
         }
 
-        //val knowledgeBaseSideInfoList:List[KnowledgeBaseSideInfo] = List.empty[KnowledgeBaseSideInfo]
-        val knowledgeBaseSideInfoList:List[KnowledgeBaseSideInfo] = (sourceKnowledgeNodes:::destinationKnowledgeNodes).map(x => {   
-        //TODO:すでにある deductionUnitsを追加しないといけない。           
-        KnowledgeBaseSideInfo(propositionId=x.propositionId, sentenceId=x.sentenceId , featureInfoList = List.empty[MatchedFeatureInfo], deductionUnits = List("exact-match"))
-        }).distinct
-
-        //isConfirmed:Boolean, deductionUnit:String
-        val sourceNode = CoveredPropositionNode(terminalId = edge.sourceId, terminalSurface = sourceNodeSurface, terminalUrl = "", matchedKnowledgeNodes=sourceMatchedKnowledgeNodes, isConfirmedSource, "exact-match")
-        val destinationNode = CoveredPropositionNode(terminalId = edge.destinationId, terminalSurface = destinationNodeSurface, terminalUrl = "", matchedKnowledgeNodes=destinationMatchedKnowledgeNodes, isConfirmedDestination, "exact-match")
-        //val knowledgeBaseSideInfo = KnowledgeBaseSideInfo(propositionId = , sentenceId = , featureInfoList = List.empty[MatchedFeatureInfo])
+        val sourceNode = CoveredPropositionNode(terminalId = edge.sourceId, terminalSurface = sourceNodeSurface, terminalUrl = "", matchedKnowledgeNodes=sourceMatchedKnowledgeNodes, isConfirmedSource, deductionUnitName)
+        val destinationNode = CoveredPropositionNode(terminalId = edge.destinationId, terminalSurface = destinationNodeSurface, terminalUrl = "", matchedKnowledgeNodes=destinationMatchedKnowledgeNodes, isConfirmedDestination, deductionUnitName)        
         CoveredPropositionEdge(sourceNode = sourceNode, destinationNode = destinationNode)
     }
 
-
+    def getMatchedKnowledgeNodes(
+        edge: KnowledgeBaseEdge, 
+        serchedKnowledgeNodes:List[KnowledgeBaseNode | KnowledgeBaseSynonymNode | KnowledgeFeatureReference], 
+        proopsitionNode: KnowledgeBaseNode,
+        featureInfoList:List[MatchedFeatureInfo]):List[MatchedKnowledgeNode]= {
+        
+        serchedKnowledgeNodes.map(x => {
+            x match {
+                case a:KnowledgeBaseNode => {
+                MatchedKnowledgeNode(
+                    propositionId = a.propositionId,
+                    sentenceId = a.sentenceId,
+                    nodeId = a.nodeId,
+                    caseNameOnEdge = edge.caseStr,
+                    isDenialWord = a.predicateArgumentStructure.isDenialWord,
+                    nodeType = a.predicateArgumentStructure.nodeType,
+                    featureInfoList = List.empty[MatchedFeatureInfo]
+                    )
+                }
+                case b:KnowledgeBaseSynonymNode => {
+                MatchedKnowledgeNode(
+                    propositionId = b.propositionId,
+                    sentenceId = b.sentenceId,
+                    nodeId = b.nodeId,
+                    caseNameOnEdge = edge.caseStr,
+                    isDenialWord = proopsitionNode.predicateArgumentStructure.isDenialWord,
+                    nodeType = proopsitionNode.predicateArgumentStructure.nodeType, 
+                    featureInfoList = List.empty[MatchedFeatureInfo]
+                    )
+                }
+                case c:KnowledgeFeatureReference => {
+                MatchedKnowledgeNode(
+                    propositionId = c.propositionId,
+                    sentenceId = c.sentenceId,
+                    nodeId = c.featureId,
+                    caseNameOnEdge = edge.caseStr,
+                    isDenialWord = proopsitionNode.predicateArgumentStructure.isDenialWord,
+                    nodeType = proopsitionNode.predicateArgumentStructure.nodeType, 
+                    featureInfoList = List.empty[MatchedFeatureInfo]
+                    )
+                }
+            }}
+        )    
+    }
 }
