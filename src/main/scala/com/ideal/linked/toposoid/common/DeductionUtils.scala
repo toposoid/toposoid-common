@@ -64,10 +64,10 @@ object DeductionUtils extends LazyLogging {
         val destinationNodeSurface = nodeMap.get(edge.destinationId).get.asInstanceOf[KnowledgeBaseNode].predicateArgumentStructure.surface
 
         val sourceKnowledgeNodes = neo4jRecords.records.map(x => x.filter(y => y.key == sourceAlias).map(
-        z => List(z.value.localNode, z.value.synonymNode, z.value.featureNode).flatten.head)).flatten
+        z => List(z.value.localNode, z.value.synonymNode, z.value.featureNode).flatten.head)).flatten.distinct
 
         val destinationKnowledgeNodes = neo4jRecords.records.map(x => x.filter(y => y.key == destinationAlias).map(
-        z => List(z.value.localNode, z.value.synonymNode, z.value.featureNode).flatten.head)).flatten
+        z => List(z.value.localNode, z.value.synonymNode, z.value.featureNode).flatten.head)).flatten.distinct
 
         val sourceMatchedKnowledgeNodes:List[MatchedKnowledgeNode] = sourceAlias match {
             case "" => List.empty[MatchedKnowledgeNode]
