@@ -51,7 +51,7 @@ object DeductionUtils extends LazyLogging {
         })    
     }
 
-    def getCoveredPropositionEdge(edge: KnowledgeBaseEdge, sourceAlias:String, destinationAlias:String, nodeMap:Map[String, KnowledgeBaseNode], neo4jRecords: Neo4jRecords, relationMatchState:RelationMatchState, deductionUnitName:String):CoveredPropositionEdge = {
+    def getCoveredPropositionEdge(edge: KnowledgeBaseEdge, sourceAlias:String, destinationAlias:String, nodeMap:Map[String, KnowledgeBaseNode], neo4jRecords: Neo4jRecords, relationMatchState:RelationMatchState, deductionUnitName:String, modelName:String):CoveredPropositionEdge = {
         //一旦どちらかのノードが埋まっていれば推論を進めるものとする。        
         val (isConfirmedSource, isConfirmedDestination)= relationMatchState match {
             case RelationMatchState.MATCHED_BOTH => (true, true)
@@ -71,12 +71,12 @@ object DeductionUtils extends LazyLogging {
 
         val sourceMatchedKnowledgeNodes:List[MatchedKnowledgeNode] = sourceAlias match {
             case "" => List.empty[MatchedKnowledgeNode]
-            case _ => getMatchedKnowledgeNodes(edge, sourceKnowledgeNodes, nodeMap.get(edge.sourceId).get, List.empty[MatchedFeatureInfo])
+            case _ => getMatchedKnowledgeNodes(edge, sourceKnowledgeNodes, nodeMap.get(edge.sourceId).get, modelName)
         }
 
         val destinationMatchedKnowledgeNodes:List[MatchedKnowledgeNode] = destinationAlias match {
             case "" =>  List.empty[MatchedKnowledgeNode]
-            case _ => getMatchedKnowledgeNodes(edge, destinationKnowledgeNodes, nodeMap.get(edge.destinationId).get, List.empty[MatchedFeatureInfo])
+            case _ => getMatchedKnowledgeNodes(edge, destinationKnowledgeNodes, nodeMap.get(edge.destinationId).get, modelName)
         }
 
         val sourceNode = CoveredPropositionNode(terminalId = edge.sourceId, terminalSurface = sourceNodeSurface, terminalUrl = "", matchedKnowledgeNodes=sourceMatchedKnowledgeNodes, isConfirmedSource, deductionUnitName)
@@ -88,44 +88,70 @@ object DeductionUtils extends LazyLogging {
         edge: KnowledgeBaseEdge, 
         serchedKnowledgeNodes:List[KnowledgeBaseNode | KnowledgeBaseSynonymNode | KnowledgeFeatureReference], 
         proopsitionNode: KnowledgeBaseNode,
-        featureInfoList:List[MatchedFeatureInfo]):List[MatchedKnowledgeNode]= {
+        modelName:String):List[MatchedKnowledgeNode]= {
         
+        val emptyMatchedFeatureInfo = MatchedFeatureInfo("", -1.0)
+
         serchedKnowledgeNodes.map(x => {
             x match {
                 case a:KnowledgeBaseNode => {
-                MatchedKnowledgeNode(
-                    propositionId = a.propositionId,
-                    sentenceId = a.sentenceId,
-                    nodeId = a.nodeId,
-                    caseNameOnEdge = edge.caseStr,
-                    isDenialWord = a.predicateArgumentStructure.isDenialWord,
-                    nodeType = a.predicateArgumentStructure.nodeType,
-                    featureInfoList = List.empty[MatchedFeatureInfo]
+                    MatchedKnowledgeNode(
+                        propositionId = a.propositionId,
+                        sentenceId = a.sentenceId,
+                        nodeId = a.nodeId,
+                        caseNameOnEdge = edge.caseStr,
+                        isDenialWord = a.predicateArgumentStructure.isDenialWord,
+                        nodeType = a.predicateArgumentStructure.nodeType,
+                        featureInfo = emptyMatchedFeatureInfo
                     )
                 }
                 case b:KnowledgeBaseSynonymNode => {
-                MatchedKnowledgeNode(
-                    propositionId = b.propositionId,
-                    sentenceId = b.sentenceId,
-                    nodeId = b.nodeId,
-                    caseNameOnEdge = edge.caseStr,
-                    isDenialWord = proopsitionNode.predicateArgumentStructure.isDenialWord,
-                    nodeType = proopsitionNode.predicateArgumentStructure.nodeType, 
-                    featureInfoList = List.empty[MatchedFeatureInfo]
+                    MatchedKnowledgeNode(
+                        propositionId = b.propositionId,
+                        sentenceId = b.sentenceId,
+                        nodeId = b.nodeId,
+                        caseNameOnEdge = edge.caseStr,
+                        isDenialWord = proopsitionNode.predicateArgumentStructure.isDenialWord,
+                        nodeType = proopsitionNode.predicateArgumentStructure.nodeType, 
+                        featureInfo = emptyMatchedFeatureInfo
                     )
                 }
                 case c:KnowledgeFeatureReference => {
-                MatchedKnowledgeNode(
-                    propositionId = c.propositionId,
-                    sentenceId = c.sentenceId,
-                    nodeId = c.featureId,
-                    caseNameOnEdge = edge.caseStr,
-                    isDenialWord = proopsitionNode.predicateArgumentStructure.isDenialWord,
-                    nodeType = proopsitionNode.predicateArgumentStructure.nodeType, 
-                    featureInfoList = List.empty[MatchedFeatureInfo]
+
+                    val matchedFeatureInfo = c.featureType match {
+                        case FeatureType.IMAGE.index => {
+                            MatchedFeatureInfo(c.featureId, getSimilarity(modelName, c))
+                        }
+                        case _ => {
+                            emptyMatchedFeatureInfo    
+                        }
+                    }
+                    
+                    MatchedKnowledgeNode(
+                        propositionId = c.propositionId,
+                        sentenceId = c.sentenceId,
+                        nodeId = c.featureId,                        
+                        caseNameOnEdge = edge.caseStr,
+                        isDenialWord = proopsitionNode.predicateArgumentStructure.isDenialWord,
+                        nodeType = proopsitionNode.predicateArgumentStructure.nodeType, 
+                        featureInfo = matchedFeatureInfo 
                     )
                 }
             }}
         )    
+    }
+
+    private def getSimilarity(modelName:String, kfr:KnowledgeFeatureReference):Float = {
+        modelName match {
+            case "" => {
+                if(kfr.similarityMap.isEmpty) -1.0F
+                else kfr.similarityMap.values.head
+            }
+            case _ => {
+                if(kfr.similarityMap.isEmpty) -1.0F
+                else if(kfr.similarityMap.contains(modelName)) kfr.similarityMap.get(modelName).get
+                else kfr.similarityMap.values.head
+            }
+        }
     }
 }
