@@ -51,7 +51,7 @@ object DeductionUtils extends LazyLogging {
         })    
     }
 
-    def getCoveredPropositionEdge(edge: KnowledgeBaseEdge, sourceAlias:String, destinationAlias:String, nodeMap:Map[String, KnowledgeBaseNode], neo4jRecords: Neo4jRecords, relationMatchState:RelationMatchState, deductionUnitName:String, modelName:String):CoveredPropositionEdge = {
+    def getCoveredPropositionEdge(edge: KnowledgeBaseEdge, sourceAlias:String, destinationAlias:String, nodeMap:Map[String, KnowledgeBaseNode], neo4jRecords: Neo4jRecords, relationMatchState:RelationMatchState, deductionUnitName:String, featureSimilarityMap:Map[String, Float] = Map.empty[String, Float]):CoveredPropositionEdge = {
         //一旦どちらかのノードが埋まっていれば推論を進めるものとする。        
         val (isConfirmedSource, isConfirmedDestination)= relationMatchState match {
             case RelationMatchState.MATCHED_BOTH => (true, true)
@@ -71,12 +71,12 @@ object DeductionUtils extends LazyLogging {
 
         val sourceMatchedKnowledgeNodes:List[MatchedKnowledgeNode] = sourceAlias match {
             case "" => List.empty[MatchedKnowledgeNode]
-            case _ => getMatchedKnowledgeNodes(edge, sourceKnowledgeNodes, nodeMap.get(edge.sourceId).get, modelName)
+            case _ => getMatchedKnowledgeNodes(edge, sourceKnowledgeNodes, nodeMap.get(edge.sourceId).get, featureSimilarityMap)
         }
 
         val destinationMatchedKnowledgeNodes:List[MatchedKnowledgeNode] = destinationAlias match {
             case "" =>  List.empty[MatchedKnowledgeNode]
-            case _ => getMatchedKnowledgeNodes(edge, destinationKnowledgeNodes, nodeMap.get(edge.destinationId).get, modelName)
+            case _ => getMatchedKnowledgeNodes(edge, destinationKnowledgeNodes, nodeMap.get(edge.destinationId).get, featureSimilarityMap)
         }
 
         val sourceNode = CoveredPropositionNode(terminalId = edge.sourceId, terminalSurface = sourceNodeSurface, terminalUrl = "", matchedKnowledgeNodes=sourceMatchedKnowledgeNodes, isConfirmedSource, deductionUnitName)
@@ -88,7 +88,7 @@ object DeductionUtils extends LazyLogging {
         edge: KnowledgeBaseEdge, 
         serchedKnowledgeNodes:List[KnowledgeBaseNode | KnowledgeBaseSynonymNode | KnowledgeFeatureReference], 
         proopsitionNode: KnowledgeBaseNode,
-        modelName:String):List[MatchedKnowledgeNode]= {
+        featureSimilarityMap:Map[String, Float]):List[MatchedKnowledgeNode]= {
         
         val emptyMatchedFeatureInfo = MatchedFeatureInfo("", -1.0)
 
@@ -120,7 +120,7 @@ object DeductionUtils extends LazyLogging {
 
                     val matchedFeatureInfo = c.featureType match {
                         case FeatureType.IMAGE.index => {
-                            MatchedFeatureInfo(c.featureId, getSimilarity(modelName, c))
+                            MatchedFeatureInfo(c.featureId, featureSimilarityMap.getOrElse(c.featureId, -1.0F))
                         }
                         case _ => {
                             emptyMatchedFeatureInfo    
@@ -141,17 +141,4 @@ object DeductionUtils extends LazyLogging {
         )    
     }
 
-    private def getSimilarity(modelName:String, kfr:KnowledgeFeatureReference):Float = {
-        modelName match {
-            case "" => {
-                if(kfr.similarityMap.isEmpty) -1.0F
-                else kfr.similarityMap.values.head
-            }
-            case _ => {
-                if(kfr.similarityMap.isEmpty) -1.0F
-                else if(kfr.similarityMap.contains(modelName)) kfr.similarityMap.get(modelName).get
-                else kfr.similarityMap.values.head
-            }
-        }
-    }
 }
