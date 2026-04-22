@@ -71,12 +71,12 @@ object DeductionUtils extends LazyLogging {
 
         val sourceMatchedKnowledgeNodes:List[MatchedKnowledgeNode] = sourceAlias match {
             case "" => List.empty[MatchedKnowledgeNode]
-            case _ => getMatchedKnowledgeNodes(edge, sourceKnowledgeNodes, nodeMap.get(edge.sourceId).get, List.empty[MatchedFeatureInfo])
+            case _ => getMatchedKnowledgeNodes(edge, sourceKnowledgeNodes, nodeMap.get(edge.sourceId).get)
         }
 
         val destinationMatchedKnowledgeNodes:List[MatchedKnowledgeNode] = destinationAlias match {
             case "" =>  List.empty[MatchedKnowledgeNode]
-            case _ => getMatchedKnowledgeNodes(edge, destinationKnowledgeNodes, nodeMap.get(edge.destinationId).get, List.empty[MatchedFeatureInfo])
+            case _ => getMatchedKnowledgeNodes(edge, destinationKnowledgeNodes, nodeMap.get(edge.destinationId).get)
         }
 
         val sourceNode = CoveredPropositionNode(terminalId = edge.sourceId, terminalSurface = sourceNodeSurface, terminalUrl = "", matchedKnowledgeNodes=sourceMatchedKnowledgeNodes, isConfirmedSource, deductionUnitName)
@@ -87,42 +87,51 @@ object DeductionUtils extends LazyLogging {
     def getMatchedKnowledgeNodes(
         edge: KnowledgeBaseEdge, 
         serchedKnowledgeNodes:List[KnowledgeBaseNode | KnowledgeBaseSynonymNode | KnowledgeFeatureReference], 
-        proopsitionNode: KnowledgeBaseNode,
-        featureInfoList:List[MatchedFeatureInfo]):List[MatchedKnowledgeNode]= {
+        proopsitionNode: KnowledgeBaseNode):List[MatchedKnowledgeNode]= {
         
         serchedKnowledgeNodes.map(x => {
             x match {
                 case a:KnowledgeBaseNode => {
-                MatchedKnowledgeNode(
-                    propositionId = a.propositionId,
-                    sentenceId = a.sentenceId,
-                    nodeId = a.nodeId,
-                    caseNameOnEdge = edge.caseStr,
-                    isDenialWord = a.predicateArgumentStructure.isDenialWord,
-                    nodeType = a.predicateArgumentStructure.nodeType,
-                    featureInfoList = List.empty[MatchedFeatureInfo]
+                    MatchedKnowledgeNode(
+                        propositionId = a.propositionId,
+                        sentenceId = a.sentenceId,
+                        nodeId = a.nodeId,
+                        caseNameOnEdge = edge.caseStr,
+                        isDenialWord = a.predicateArgumentStructure.isDenialWord,
+                        nodeType = a.predicateArgumentStructure.nodeType,
+                        featureInfoList = List.empty[MatchedFeatureInfo]
                     )
                 }
                 case b:KnowledgeBaseSynonymNode => {
-                MatchedKnowledgeNode(
-                    propositionId = b.propositionId,
-                    sentenceId = b.sentenceId,
-                    nodeId = b.nodeId,
-                    caseNameOnEdge = edge.caseStr,
-                    isDenialWord = proopsitionNode.predicateArgumentStructure.isDenialWord,
-                    nodeType = proopsitionNode.predicateArgumentStructure.nodeType, 
-                    featureInfoList = List.empty[MatchedFeatureInfo]
+                    MatchedKnowledgeNode(
+                        propositionId = b.propositionId,
+                        sentenceId = b.sentenceId,
+                        nodeId = b.nodeId,
+                        caseNameOnEdge = edge.caseStr,
+                        isDenialWord = proopsitionNode.predicateArgumentStructure.isDenialWord,
+                        nodeType = proopsitionNode.predicateArgumentStructure.nodeType, 
+                        featureInfoList = List.empty[MatchedFeatureInfo]
                     )
                 }
                 case c:KnowledgeFeatureReference => {
-                MatchedKnowledgeNode(
-                    propositionId = c.propositionId,
-                    sentenceId = c.sentenceId,
-                    nodeId = c.featureId,
-                    caseNameOnEdge = edge.caseStr,
-                    isDenialWord = proopsitionNode.predicateArgumentStructure.isDenialWord,
-                    nodeType = proopsitionNode.predicateArgumentStructure.nodeType, 
-                    featureInfoList = List.empty[MatchedFeatureInfo]
+
+                    val matchedFeatureInfoList = c.featureType match {
+                        case FeatureType.IMAGE.index => {
+                            List.empty[MatchedFeatureInfo]
+                        }
+                        case _ => {
+                            List.empty[MatchedFeatureInfo]
+                        }
+                    }
+                    
+                    MatchedKnowledgeNode(
+                        propositionId = c.propositionId,
+                        sentenceId = c.sentenceId,
+                        nodeId = c.featureId,                        
+                        caseNameOnEdge = edge.caseStr,
+                        isDenialWord = proopsitionNode.predicateArgumentStructure.isDenialWord,
+                        nodeType = proopsitionNode.predicateArgumentStructure.nodeType, 
+                        featureInfoList = matchedFeatureInfoList 
                     )
                 }
             }}
