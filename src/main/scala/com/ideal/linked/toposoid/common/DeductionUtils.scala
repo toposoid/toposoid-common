@@ -51,7 +51,7 @@ object DeductionUtils extends LazyLogging {
         })    
     }
 
-    def getCoveredPropositionEdge(edge: KnowledgeBaseEdge, sourceAlias:String, destinationAlias:String, nodeMap:Map[String, KnowledgeBaseNode], neo4jRecords: Neo4jRecords, relationMatchState:RelationMatchState, deductionUnitName:String):CoveredPropositionEdge = {
+    def getCoveredPropositionEdge(edge: KnowledgeBaseEdge, sourceAlias:String, destinationAlias:String, nodeMap:Map[String, KnowledgeBaseNode], neo4jRecords: Neo4jRecords, relationMatchState:RelationMatchState, deductionUnitName:String, modelName:String):CoveredPropositionEdge = {
         //一旦どちらかのノードが埋まっていれば推論を進めるものとする。        
         val (isConfirmedSource, isConfirmedDestination)= relationMatchState match {
             case RelationMatchState.MATCHED_BOTH => (true, true)
@@ -87,8 +87,11 @@ object DeductionUtils extends LazyLogging {
     def getMatchedKnowledgeNodes(
         edge: KnowledgeBaseEdge, 
         serchedKnowledgeNodes:List[KnowledgeBaseNode | KnowledgeBaseSynonymNode | KnowledgeFeatureReference], 
-        proopsitionNode: KnowledgeBaseNode):List[MatchedKnowledgeNode]= {
+        proopsitionNode: KnowledgeBaseNode,
+        modelName:String):List[MatchedKnowledgeNode]= {
         
+        val emptyMatchedFeatureInfo = MatchedFeatureInfo("", -1.0)
+
         serchedKnowledgeNodes.map(x => {
             x match {
                 case a:KnowledgeBaseNode => {
@@ -99,7 +102,7 @@ object DeductionUtils extends LazyLogging {
                         caseNameOnEdge = edge.caseStr,
                         isDenialWord = a.predicateArgumentStructure.isDenialWord,
                         nodeType = a.predicateArgumentStructure.nodeType,
-                        featureInfoList = List.empty[MatchedFeatureInfo]
+                        featureInfo = emptyMatchedFeatureInfo
                     )
                 }
                 case b:KnowledgeBaseSynonymNode => {
@@ -110,14 +113,25 @@ object DeductionUtils extends LazyLogging {
                         caseNameOnEdge = edge.caseStr,
                         isDenialWord = proopsitionNode.predicateArgumentStructure.isDenialWord,
                         nodeType = proopsitionNode.predicateArgumentStructure.nodeType, 
-                        featureInfoList = List.empty[MatchedFeatureInfo]
+                        featureInfo = emptyMatchedFeatureInfo
                     )
                 }
                 case c:KnowledgeFeatureReference => {
 
-                    val matchedFeatureInfoList = c.featureType match {
+                    val matchedFeatureInfo = c.featureType match {
                         case FeatureType.IMAGE.index => {
-                            List.empty[MatchedFeatureInfo]
+                            val similarity:Float = modelName match {
+                                case "" => {
+                                    if(c.similarityMap.isEmpty) -1.0
+                                    else c.similarityMap.values.head
+                                }
+                                case _ => {
+                                    if(c.similarityMap.isEmpty) -1.0
+                                    else if(c.similarityMap.contains(modelName)) c.similarityMap.get(modelName).get
+                                    else c.similarityMap.values.head
+                                }
+                            }
+                            MatchedFeatureInfo(c.featureId, similarity)
                         }
                         case _ => {
                             List.empty[MatchedFeatureInfo]
@@ -131,7 +145,7 @@ object DeductionUtils extends LazyLogging {
                         caseNameOnEdge = edge.caseStr,
                         isDenialWord = proopsitionNode.predicateArgumentStructure.isDenialWord,
                         nodeType = proopsitionNode.predicateArgumentStructure.nodeType, 
-                        featureInfoList = matchedFeatureInfoList 
+                        featureInfo = emptyMatchedFeatureInfo 
                     )
                 }
             }}
