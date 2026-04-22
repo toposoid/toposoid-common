@@ -71,12 +71,12 @@ object DeductionUtils extends LazyLogging {
 
         val sourceMatchedKnowledgeNodes:List[MatchedKnowledgeNode] = sourceAlias match {
             case "" => List.empty[MatchedKnowledgeNode]
-            case _ => getMatchedKnowledgeNodes(edge, sourceKnowledgeNodes, nodeMap.get(edge.sourceId).get)
+            case _ => getMatchedKnowledgeNodes(edge, sourceKnowledgeNodes, nodeMap.get(edge.sourceId).get, modelName)
         }
 
         val destinationMatchedKnowledgeNodes:List[MatchedKnowledgeNode] = destinationAlias match {
             case "" =>  List.empty[MatchedKnowledgeNode]
-            case _ => getMatchedKnowledgeNodes(edge, destinationKnowledgeNodes, nodeMap.get(edge.destinationId).get)
+            case _ => getMatchedKnowledgeNodes(edge, destinationKnowledgeNodes, nodeMap.get(edge.destinationId).get, modelName)
         }
 
         val sourceNode = CoveredPropositionNode(terminalId = edge.sourceId, terminalSurface = sourceNodeSurface, terminalUrl = "", matchedKnowledgeNodes=sourceMatchedKnowledgeNodes, isConfirmedSource, deductionUnitName)
@@ -120,21 +120,10 @@ object DeductionUtils extends LazyLogging {
 
                     val matchedFeatureInfo = c.featureType match {
                         case FeatureType.IMAGE.index => {
-                            val similarity:Float = modelName match {
-                                case "" => {
-                                    if(c.similarityMap.isEmpty) -1.0
-                                    else c.similarityMap.values.head
-                                }
-                                case _ => {
-                                    if(c.similarityMap.isEmpty) -1.0
-                                    else if(c.similarityMap.contains(modelName)) c.similarityMap.get(modelName).get
-                                    else c.similarityMap.values.head
-                                }
-                            }
-                            MatchedFeatureInfo(c.featureId, similarity)
+                            MatchedFeatureInfo(c.featureId, getSimilarity(modelName, c))
                         }
                         case _ => {
-                            List.empty[MatchedFeatureInfo]
+                            emptyMatchedFeatureInfo    
                         }
                     }
                     
@@ -145,10 +134,24 @@ object DeductionUtils extends LazyLogging {
                         caseNameOnEdge = edge.caseStr,
                         isDenialWord = proopsitionNode.predicateArgumentStructure.isDenialWord,
                         nodeType = proopsitionNode.predicateArgumentStructure.nodeType, 
-                        featureInfo = emptyMatchedFeatureInfo 
+                        featureInfo = matchedFeatureInfo 
                     )
                 }
             }}
         )    
+    }
+
+    private def getSimilarity(modelName:String, kfr:KnowledgeFeatureReference):Float = {
+        modelName match {
+            case "" => {
+                if(kfr.similarityMap.isEmpty) -1.0F
+                else kfr.similarityMap.values.head
+            }
+            case _ => {
+                if(kfr.similarityMap.isEmpty) -1.0F
+                else if(kfr.similarityMap.contains(modelName)) kfr.similarityMap.get(modelName).get
+                else kfr.similarityMap.values.head
+            }
+        }
     }
 }
