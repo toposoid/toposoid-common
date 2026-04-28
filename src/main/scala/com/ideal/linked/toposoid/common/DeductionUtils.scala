@@ -42,24 +42,8 @@ case class DeductionQuery(query:String,relationMatchState:RelationMatchState, so
 
 object DeductionUtils extends LazyLogging {
 
-    def getUnsettledEdges(aso:AnalyzedSentenceObject): List[KnowledgeBaseEdge] = {
-        //TODO:ロジカルエッヂを省けてる？
-        val pairSetList = aso.deductionResult.coveredPropositionEdges.foldLeft(List.empty[Set[String]]){
-        (acc, x) => {
-            if(x.sourceNode.isConfirmed && x.destinationNode.isConfirmed){
-                acc :+ Set(x.sourceNode.terminalId, x.destinationNode.terminalId)
-            }else{
-                acc
-            }        
-        }
-        }
-        aso.edgeList.filterNot(x => {
-            val targetLink = Set(x.sourceId, x.destinationId)
-            pairSetList.contains(targetLink)
-        })    
-    }
-
-    def analyzeGraphKnowledge(getQeuries:(KnowledgeBaseEdge, Map[String, KnowledgeBaseNode], TransversalState) => List[DeductionQuery], edges: List[KnowledgeBaseEdge], aso:AnalyzedSentenceObject, transversalState:TransversalState):List[CoveredPropositionEdge] = {    
+    def analyzeGraphKnowledge(getQeuries:(KnowledgeBaseEdge, Map[String, KnowledgeBaseNode], TransversalState) => List[DeductionQuery], aso:AnalyzedSentenceObject, transversalState:TransversalState):List[CoveredPropositionEdge] = {    
+        val edges:List[KnowledgeBaseEdge] = getUnsettledEdges(aso)
         val futures: List[Future[Option[CoveredPropositionEdge]]] = edges.foldLeft(List.empty[Future[Option[CoveredPropositionEdge]]]){
         (acc, edge) => {
             val deductionQueries = getQeuries(edge, aso.nodeMap, transversalState)       
@@ -72,6 +56,23 @@ object DeductionUtils extends LazyLogging {
         val combinedFuture: Future[List[Option[CoveredPropositionEdge]]] = Future.sequence(futures)
         val result = Await.result(combinedFuture, Duration.Inf)    
         result.flatten
+    }
+
+    private def getUnsettledEdges(aso:AnalyzedSentenceObject): List[KnowledgeBaseEdge] = {
+        //TODO:ロジカルエッヂを省けてる？
+        val pairSetList = aso.deductionResult.coveredPropositionEdges.foldLeft(List.empty[Set[String]]){
+            (acc, x) => {
+                if(x.sourceNode.isConfirmed && x.destinationNode.isConfirmed){
+                    acc :+ Set(x.sourceNode.terminalId, x.destinationNode.terminalId)
+                }else{
+                    acc
+                }        
+            }
+        }
+        aso.edgeList.filterNot(x => {
+            val targetLink = Set(x.sourceId, x.destinationId)
+            pairSetList.contains(targetLink)
+        })    
     }
 
     private def analyzeEdge(idx:Int, deductionQueries:List[DeductionQuery],edge:KnowledgeBaseEdge, aso:AnalyzedSentenceObject, neo4JUtils:Neo4JUtilsImpl, transversalState:TransversalState):Option[CoveredPropositionEdge] = {
