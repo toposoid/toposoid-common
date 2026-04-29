@@ -42,7 +42,7 @@ case class DeductionQuery(query:String,relationMatchState:RelationMatchState, so
 
 object DeductionUtils extends LazyLogging {
 
-    def analyzeGraphKnowledge(getQeuries:(KnowledgeBaseEdge, aso:AnalyzedSentenceObject, TransversalState) => List[DeductionQuery], aso:AnalyzedSentenceObject, transversalState:TransversalState):List[CoveredPropositionEdge] = {    
+    def analyzeGraphKnowledge(getQeuries:(KnowledgeBaseEdge, AnalyzedSentenceObject, TransversalState) => List[DeductionQuery], aso:AnalyzedSentenceObject, transversalState:TransversalState):List[CoveredPropositionEdge] = {    
         val edges:List[KnowledgeBaseEdge] = getUnsettledEdges(aso)
         val futures: List[Future[Option[CoveredPropositionEdge]]] = edges.foldLeft(List.empty[Future[Option[CoveredPropositionEdge]]]){
         (acc, edge) => {
