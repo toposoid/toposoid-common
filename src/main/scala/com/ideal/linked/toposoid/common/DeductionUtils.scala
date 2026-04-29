@@ -42,11 +42,11 @@ case class DeductionQuery(query:String,relationMatchState:RelationMatchState, so
 
 object DeductionUtils extends LazyLogging {
 
-    def analyzeGraphKnowledge(getQeuries:(KnowledgeBaseEdge, Map[String, KnowledgeBaseNode], TransversalState) => List[DeductionQuery], aso:AnalyzedSentenceObject, transversalState:TransversalState):List[CoveredPropositionEdge] = {    
+    def analyzeGraphKnowledge(getQeuries:(KnowledgeBaseEdge, aso:AnalyzedSentenceObject, TransversalState) => List[DeductionQuery], aso:AnalyzedSentenceObject, transversalState:TransversalState):List[CoveredPropositionEdge] = {    
         val edges:List[KnowledgeBaseEdge] = getUnsettledEdges(aso)
         val futures: List[Future[Option[CoveredPropositionEdge]]] = edges.foldLeft(List.empty[Future[Option[CoveredPropositionEdge]]]){
         (acc, edge) => {
-            val deductionQueries = getQeuries(edge, aso.nodeMap, transversalState)       
+            val deductionQueries = getQeuries(edge, aso, transversalState)       
             deductionQueries.size match {
             case 0 => acc :+ Future(Option(aso.deductionResult.coveredPropositionEdges.filter(x => x.sourceNode.terminalId.equals(edge.sourceId) && x.destinationNode.terminalId.equals(edge.destinationId)).head))
             case _ => acc :+ Future(analyzeEdge(0, deductionQueries, edge, aso, Neo4JUtilsImpl(), transversalState))
