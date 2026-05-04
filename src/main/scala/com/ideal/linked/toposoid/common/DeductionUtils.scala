@@ -58,6 +58,26 @@ object DeductionUtils extends LazyLogging {
         result.flatten
     }
 
+    def getPassThroughNodeStatePair(sourceNode:KnowledgeBaseNode, destinationNode:KnowledgeBaseNode):(Boolean, Boolean) = {
+        val haveDeterminerSource = sourceNode.localContext.lang match  {
+        case "en_US" => {
+            if(sourceNode.predicateArgumentStructure.caseType.equals("dt")) true
+            else false
+        }
+        case "ja_JP" => false
+        case _ => false
+        }
+        val haveDeterminerDestination = destinationNode.localContext.lang match  {
+        case "en_US" => {
+            if(destinationNode.predicateArgumentStructure.caseType.equals("dt")) true
+            else false
+        }
+        case "ja_JP" => false
+        case _ => false
+        }
+        (haveDeterminerSource, haveDeterminerDestination)
+    }
+
     private def getUnsettledEdges(aso:AnalyzedSentenceObject): List[KnowledgeBaseEdge] = {
         //TODO:ロジカルエッヂを省けてる？
         val pairSetList = aso.deductionResult.coveredPropositionEdges.foldLeft(List.empty[Set[String]]){
@@ -89,6 +109,9 @@ object DeductionUtils extends LazyLogging {
             case 0 => (false, false, None) //BaseMatch用
             case _ => (coveredPropositionEdges.head.sourceNode.isConfirmed, coveredPropositionEdges.head.destinationNode.isConfirmed, Option(coveredPropositionEdges.head))
         }
+
+        val (haveDeterminerSource, haveDeterminerDestination) = getPassThroughNodeStatePair(sourceNode, destinationNode)
+        
         //クエリを実行する必要のない場合は、早めに判断し次のクエリを実行を促す。
         if(!deductionQueries(idx).isSourceConfirmed == isSourceConfirmed || !deductionQueries(idx).isDestinationConfirmed == isDestinationConfirmed){
             if(idx + 1 < deductionQueries.size) analyzeEdge(idx+1, deductionQueries, edge, aso, neo4JUtils:Neo4JUtilsImpl, transversalState:TransversalState)
@@ -98,12 +121,12 @@ object DeductionUtils extends LazyLogging {
             val sourceMorphemes = sourceNode.predicateArgumentStructure.morphemes
             val destinationMorphemes = destinationNode.predicateArgumentStructure.morphemes
             val isVerbOrNounOnSource = sourceNode.localContext.lang match {
-            case "ja_JP" =>  sourceMorphemes.filter(x => x.split(",").toList.contains("動詞")).size > 0 || sourceMorphemes.filter(x => x.split(",").toList.contains("名詞")).size > 0
-            case "en_US" => sourceMorphemes.filter(x => x.split(",").toList.contains("VERB")).size > 0  || sourceMorphemes.filter(x => x.split(",").toList.contains("NOUN")).size > 0
+                case "ja_JP" =>  sourceMorphemes.filter(x => x.split(",").toList.contains("動詞")).size > 0 || sourceMorphemes.filter(x => x.split(",").toList.contains("名詞")).size > 0
+                case "en_US" => sourceMorphemes.filter(x => x.split(",").toList.contains("VERB")).size > 0  || sourceMorphemes.filter(x => x.split(",").toList.contains("NOUN")).size > 0
             }
             val isVerbOrNounOnDestination = destinationNode.localContext.lang match {
-            case "ja_JP" =>  destinationMorphemes.filter(x => x.split(",").toList.contains("動詞")).size > 0 || destinationMorphemes.filter(x => x.split(",").toList.contains("名詞")).size > 0
-            case "en_US" => destinationMorphemes.filter(x => x.split(",").toList.contains("VERB")).size > 0  || destinationMorphemes.filter(x => x.split(",").toList.contains("NOUN")).size > 0
+                case "ja_JP" =>  destinationMorphemes.filter(x => x.split(",").toList.contains("動詞")).size > 0 || destinationMorphemes.filter(x => x.split(",").toList.contains("名詞")).size > 0
+                case "en_US" => destinationMorphemes.filter(x => x.split(",").toList.contains("VERB")).size > 0  || destinationMorphemes.filter(x => x.split(",").toList.contains("NOUN")).size > 0
             }
 
             deductionQueries(idx).relationMatchState match {
@@ -116,7 +139,7 @@ object DeductionUtils extends LazyLogging {
                 }}
             }
             case RelationMatchState.MATCHED_SOURCE_NODE_ONLY => {
-                if(isVerbOrNounOnDestination){
+                if(isVerbOrNounOnDestination || haveDeterminerDestination){
                 analyze(idx, deductionQueries, edge, nodeMap, neo4JUtils, transversalState) match {
                     case Some(x) => Option(x)
                     case _ => {
@@ -129,7 +152,7 @@ object DeductionUtils extends LazyLogging {
                 }
             }
             case RelationMatchState.MATCHED_TARGET_NODE_ONLY => {
-                if(isVerbOrNounOnSource) {
+                if(isVerbOrNounOnSource || haveDeterminerSource) {
                 analyze(idx, deductionQueries, edge, nodeMap, neo4JUtils, transversalState) match {
                     case Some(x) => Option(x)
                     case _ => {
@@ -142,7 +165,7 @@ object DeductionUtils extends LazyLogging {
                 }
             }
             case RelationMatchState.NOT_MATCHED_BOTH => {
-                if(isVerbOrNounOnSource && isVerbOrNounOnDestination){
+                if(isVerbOrNounOnSource || haveDeterminerSource) && (isVerbOrNounOnDestination || haveDeterminerSource ){
                 analyze(idx, deductionQueries, edge, nodeMap, neo4JUtils, transversalState) match {
                     case Some(x) => Option(x)
                     case _ => {
