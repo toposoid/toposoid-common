@@ -165,7 +165,7 @@ object DeductionUtils extends LazyLogging {
                 }
             }
             case RelationMatchState.NOT_MATCHED_BOTH => {
-                if(isVerbOrNounOnSource || haveDeterminerSource) && (isVerbOrNounOnDestination || haveDeterminerSource ){
+                if((isVerbOrNounOnSource || haveDeterminerSource) && (isVerbOrNounOnDestination || haveDeterminerSource)){
                 analyze(idx, deductionQueries, edge, nodeMap, neo4JUtils, transversalState) match {
                     case Some(x) => Option(x)
                     case _ => {
