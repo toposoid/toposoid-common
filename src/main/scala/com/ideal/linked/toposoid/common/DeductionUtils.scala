@@ -110,7 +110,7 @@ object DeductionUtils extends LazyLogging {
             case _ => (coveredPropositionEdges.head.sourceNode.isConfirmed, coveredPropositionEdges.head.destinationNode.isConfirmed, Option(coveredPropositionEdges.head))
         }
 
-        val (haveDeterminerSource, haveDeterminerDestination) = getPassThroughNodeStatePair(sourceNode, destinationNode)
+        //val (haveDeterminerSource, haveDeterminerDestination) = getPassThroughNodeStatePair(sourceNode, destinationNode)
         
         //クエリを実行する必要のない場合は、早めに判断し次のクエリを実行を促す。
         if(!deductionQueries(idx).isSourceConfirmed == isSourceConfirmed || !deductionQueries(idx).isDestinationConfirmed == isDestinationConfirmed){
