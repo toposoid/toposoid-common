@@ -57,7 +57,7 @@ object DeductionUtils extends LazyLogging {
         val result = Await.result(combinedFuture, Duration.Inf)    
         result.flatten
     }
-
+    /*
     def getPassThroughNodeStatePair(sourceNode:KnowledgeBaseNode, destinationNode:KnowledgeBaseNode):(Boolean, Boolean) = {
         val haveDeterminerSource = sourceNode.localContext.lang match  {
         case "en_US" => {
@@ -77,7 +77,7 @@ object DeductionUtils extends LazyLogging {
         }
         (haveDeterminerSource, haveDeterminerDestination)
     }
-
+    */
     private def getUnsettledEdges(aso:AnalyzedSentenceObject): List[KnowledgeBaseEdge] = {
         //TODO:ロジカルエッヂを省けてる？
         val pairSetList = aso.deductionResult.coveredPropositionEdges.foldLeft(List.empty[Set[String]]){
@@ -139,7 +139,7 @@ object DeductionUtils extends LazyLogging {
                 }}
             }
             case RelationMatchState.MATCHED_SOURCE_NODE_ONLY => {
-                if(isVerbOrNounOnDestination || haveDeterminerDestination){
+                if(isVerbOrNounOnDestination){
                 analyze(idx, deductionQueries, edge, nodeMap, neo4JUtils, transversalState) match {
                     case Some(x) => Option(x)
                     case _ => {
@@ -152,7 +152,7 @@ object DeductionUtils extends LazyLogging {
                 }
             }
             case RelationMatchState.MATCHED_TARGET_NODE_ONLY => {
-                if(isVerbOrNounOnSource || haveDeterminerSource) {
+                if(isVerbOrNounOnSource) {
                 analyze(idx, deductionQueries, edge, nodeMap, neo4JUtils, transversalState) match {
                     case Some(x) => Option(x)
                     case _ => {
@@ -165,7 +165,7 @@ object DeductionUtils extends LazyLogging {
                 }
             }
             case RelationMatchState.NOT_MATCHED_BOTH => {
-                if((isVerbOrNounOnSource || haveDeterminerSource) && (isVerbOrNounOnDestination || haveDeterminerSource)){
+                if(isVerbOrNounOnSource && isVerbOrNounOnDestination){
                 analyze(idx, deductionQueries, edge, nodeMap, neo4JUtils, transversalState) match {
                     case Some(x) => Option(x)
                     case _ => {
