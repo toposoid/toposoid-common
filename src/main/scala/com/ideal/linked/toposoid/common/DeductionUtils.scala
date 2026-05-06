@@ -45,39 +45,23 @@ object DeductionUtils extends LazyLogging {
     def analyzeGraphKnowledge(getQeuries:(KnowledgeBaseEdge, AnalyzedSentenceObject, TransversalState) => List[DeductionQuery], aso:AnalyzedSentenceObject, transversalState:TransversalState):List[CoveredPropositionEdge] = {    
         val edges:List[KnowledgeBaseEdge] = getUnsettledEdges(aso)
         val futures: List[Future[Option[CoveredPropositionEdge]]] = edges.foldLeft(List.empty[Future[Option[CoveredPropositionEdge]]]){
-        (acc, edge) => {
-            val deductionQueries = getQeuries(edge, aso, transversalState)       
-            deductionQueries.size match {
-            case 0 => acc :+ Future(Option(aso.deductionResult.coveredPropositionEdges.filter(x => x.sourceNode.terminalId.equals(edge.sourceId) && x.destinationNode.terminalId.equals(edge.destinationId)).head))
-            case _ => acc :+ Future(analyzeEdge(0, deductionQueries, edge, aso, Neo4JUtilsImpl(), transversalState))
-            }        
-        }
-        }    
+            (acc, edge) => {
+                val deductionQueries = getQeuries(edge, aso, transversalState)       
+                deductionQueries.size match {
+                    case 0 => {
+                        aso.deductionResult.coveredPropositionEdges.size match {
+                            case 0 => acc
+                            case _ => acc :+ Future(Option(aso.deductionResult.coveredPropositionEdges.filter(x => x.sourceNode.terminalId.equals(edge.sourceId) && x.destinationNode.terminalId.equals(edge.destinationId)).head))
+                        }                
+                    }
+                    case _ => acc :+ Future(analyzeEdge(0, deductionQueries, edge, aso, Neo4JUtilsImpl(), transversalState))
+                }        
+            }
+        }         
         val combinedFuture: Future[List[Option[CoveredPropositionEdge]]] = Future.sequence(futures)
         val result = Await.result(combinedFuture, Duration.Inf)    
         result.flatten
     }
-    /*
-    def getPassThroughNodeStatePair(sourceNode:KnowledgeBaseNode, destinationNode:KnowledgeBaseNode):(Boolean, Boolean) = {
-        val haveDeterminerSource = sourceNode.localContext.lang match  {
-        case "en_US" => {
-            if(sourceNode.predicateArgumentStructure.caseType.equals("dt")) true
-            else false
-        }
-        case "ja_JP" => false
-        case _ => false
-        }
-        val haveDeterminerDestination = destinationNode.localContext.lang match  {
-        case "en_US" => {
-            if(destinationNode.predicateArgumentStructure.caseType.equals("dt")) true
-            else false
-        }
-        case "ja_JP" => false
-        case _ => false
-        }
-        (haveDeterminerSource, haveDeterminerDestination)
-    }
-    */
     private def getUnsettledEdges(aso:AnalyzedSentenceObject): List[KnowledgeBaseEdge] = {
         //TODO:ロジカルエッヂを省けてる？
         val pairSetList = aso.deductionResult.coveredPropositionEdges.foldLeft(List.empty[Set[String]]){
@@ -110,8 +94,6 @@ object DeductionUtils extends LazyLogging {
             case _ => (coveredPropositionEdges.head.sourceNode.isConfirmed, coveredPropositionEdges.head.destinationNode.isConfirmed, Option(coveredPropositionEdges.head))
         }
 
-        //val (haveDeterminerSource, haveDeterminerDestination) = getPassThroughNodeStatePair(sourceNode, destinationNode)
-        
         //クエリを実行する必要のない場合は、早めに判断し次のクエリを実行を促す。
         if(!deductionQueries(idx).isSourceConfirmed == isSourceConfirmed || !deductionQueries(idx).isDestinationConfirmed == isDestinationConfirmed){
             if(idx + 1 < deductionQueries.size) analyzeEdge(idx+1, deductionQueries, edge, aso, neo4JUtils:Neo4JUtilsImpl, transversalState:TransversalState)
