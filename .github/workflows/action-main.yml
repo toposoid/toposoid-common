@@ -27,11 +27,11 @@ jobs:
           ref: ${{ env.PJ_BRANCH }}
   build-toposoid-scala-lib-base-amd64:
     needs: build-preparation    
-    uses: toposoid/toposoid-scala-lib/.github/workflows/action-base-build-push-amd64.yml@ref
+    uses: toposoid/toposoid-scala-lib/.github/workflows/action-base-build-push-amd64.yml@${{ env.PJ_BRANCH }}
     secrets: inherit  
   build-toposoid-scala-lib-base-arm64:
     needs: build-preparation
-    uses: toposoid/toposoid-scala-lib/.github/workflows/action-base-build-push-arm64.yml@ref
+    uses: toposoid/toposoid-scala-lib/.github/workflows/action-base-build-push-arm64.yml@${{ env.PJ_BRANCH }}
     secrets: inherit  
   merge-and-push-base-manifest:    
     runs-on: ubuntu-24.04
@@ -50,11 +50,11 @@ jobs:
           docker manifest push toposoid/${{ env.PJ_REPO }}-base:${{ env.PJ_VERSION }}
   build-toposoid-scala-lib-amd64:
     needs: merge-and-push-base-manifest 
-    uses: toposoid/toposoid-scala-lib/.github/workflows/action-build-push-amd64.yml@ref
+    uses: toposoid/toposoid-scala-lib/.github/workflows/action-build-push-amd64.yml@${{ env.PJ_BRANCH }}
     secrets: inherit  
   build-toposoid-scala-lib-arm64:
     needs: merge-and-push-base-manifest
-    uses: toposoid/toposoid-scala-lib/.github/workflows/action-build-push-arm64.yml@ref
+    uses: toposoid/toposoid-scala-lib/.github/workflows/action-build-push-arm64.yml@${{ env.PJ_BRANCH }}
     secrets: inherit  
   merge-and-push-manifest:    
     runs-on: ubuntu-24.04
