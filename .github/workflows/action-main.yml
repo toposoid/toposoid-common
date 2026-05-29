@@ -25,10 +25,12 @@ jobs:
         with:
           repository: ${{ env.PJ_ACTOR }}/toposoid-scala-lib
           ref: ${{ env.PJ_BRANCH }}
-  build-toposoid-scala-lib-base-amd64:    
+  build-toposoid-scala-lib-base-amd64:
+    needs: [build-preparation]  
     uses: ./.github/workflows/action-base-build-push-amd64.yml
     secrets: inherit  
   build-toposoid-scala-lib-base-arm64:
+    needs: [build-preparation]
     uses: ./.github/workflows/action-base-build-push-arm64.yml
     secrets: inherit  
   merge-and-push-base-manifest:    
