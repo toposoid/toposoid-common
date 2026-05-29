@@ -27,12 +27,12 @@ jobs:
           ref: ${{ env.PJ_BRANCH }}
           path: scala-lib-path
   build-toposoid-scala-lib-base-amd64:
-    needs: [build-preparation]  
-    uses: ./scala-lib-path/.github/workflows/action-base-build-push-amd64.yml
+    needs: build-preparation    
+    uses: toposoid/toposoid-scala-lib/.github/workflows/action-base-build-push-amd64.yml@ref
     secrets: inherit  
   build-toposoid-scala-lib-base-arm64:
-    needs: [build-preparation]
-    uses: ./scala-lib-path/.github/workflows/action-base-build-push-arm64.yml
+    needs: build-preparation
+    uses: toposoid/toposoid-scala-lib/.github/workflows/action-base-build-push-arm64.yml@ref
     secrets: inherit  
   merge-and-push-base-manifest:    
     runs-on: ubuntu-24.04
