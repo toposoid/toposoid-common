@@ -1,0 +1,73 @@
+name: Build
+on:
+  push:
+    branches:
+      - feature
+  workflow_dispatch:
+env:
+  PJ_ACTOR: toposoid
+  PJ_REPO: toposoid-scala-lib
+  PJ_BRANCH: feature
+  PJ_VERSION: 0.7-SNAPSHOT
+jobs:
+  unit-test_toposoid-common-amd64:    
+    uses: ./.github/workflows/action-check-amd64.yml
+    secrets: inherit  
+  unit-test_toposoid-common-arm64:
+    uses: ./.github/workflows/action-check-arm64.yml
+    secrets: inherit      
+  build-preparation:    
+    runs-on: ubuntu-24.04
+    needs: [unit-test_toposoid-common-amd64, unit-test_toposoid-common-arm64]
+    steps:
+      - name: Clone toposoid-scala-lib
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.PJ_ACTOR }}/toposoid-scala-lib
+          ref: ${{ env.PJ_BRANCH }}
+  build-toposoid-scala-lib-base-amd64:    
+    needs: [build-preparationn]
+    uses: ./.github/workflows/action-base-build-push-amd64.yml
+    secrets: inherit  
+  build-toposoid-scala-lib-base-arm64:
+    needs: [build-preparationn]
+    uses: ./.github/workflows/action-base-build-push-arm64.yml
+    secrets: inherit  
+  merge-and-push-base-manifest:    
+    runs-on: ubuntu-24.04
+    needs: [build-toposoid-scala-lib-base-amd64, build-toposoid-scala-lib-base-arm64]
+    steps:
+      - name: Login to CR
+        uses: docker/login-action@v3
+        with:
+          username: toposoid
+          password: ${{ secrets.CR_TOKEN }}
+      - name: Marge Push Base Manifest
+        run: |
+          docker pull toposoid/${{ env.PJ_REPO }}-base:${{ env.PJ_VERSION }}-amd64
+          docker pull --platform linux/arm64 toposoid/${{ env.PJ_REPO }}-base:${{ env.PJ_VERSION }}-arm64
+          docker manifest create toposoid/${{ env.PJ_REPO }}-base:${{ env.PJ_VERSION }} toposoid/${{ env.PJ_REPO }}-base:${{ env.PJ_VERSION }}-amd64 toposoid/${{ env.PJ_REPO }}-base:${{ env.PJ_VERSION }}-arm64          
+          docker manifest push toposoid/${{ env.PJ_REPO }}-base:${{ env.PJ_VERSION }}
+  build-toposoid-scala-lib-amd64:
+    needs: merge-and-push-base-manifest 
+    uses: ./.github/workflows/action-build-push-amd64.yml
+    secrets: inherit  
+  build-toposoid-scala-lib-arm64:
+    needs: merge-and-push-base-manifest
+    uses: ./.github/workflows/action-build-push-arm64.yml
+    secrets: inherit  
+  merge-and-push-manifest:    
+    runs-on: ubuntu-24.04
+    needs: [merge-and-push-base-manifest, build-toposoid-scala-lib-amd64, build-toposoid-scala-lib-arm64]
+    steps:
+      - name: Login to CR
+        uses: docker/login-action@v3
+        with:
+          username: toposoid
+          password: ${{ secrets.CR_TOKEN }}
+      - name: Marge Push Manifest
+        run: |
+          docker pull toposoid/${{ env.PJ_REPO }}:${{ env.PJ_VERSION }}-amd64
+          docker pull --platform linux/arm64 toposoid/${{ env.PJ_REPO }}:${{ env.PJ_VERSION }}-arm64
+          docker manifest create toposoid/${{ env.PJ_REPO }}:${{ env.PJ_VERSION }} toposoid/${{ env.PJ_REPO }}:${{ env.PJ_VERSION }}-amd64 toposoid/${{ env.PJ_REPO }}:${{ env.PJ_VERSION }}-arm64          
+          docker manifest push toposoid/${{ env.PJ_REPO }}:${{ env.PJ_VERSION }}
