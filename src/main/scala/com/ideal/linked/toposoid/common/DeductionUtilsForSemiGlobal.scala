@@ -21,6 +21,14 @@ import com.typesafe.scalalogging.LazyLogging
 import com.ideal.linked.toposoid.knowledgebase.featurevector.model.FeatureVectorSearchResult
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
 import play.api.libs.json.Json
+import com.ideal.linked.toposoid.protocol.model.base.CoveredPropositionEdge
+import com.ideal.linked.toposoid.protocol.model.base.MatchedKnowledgeNode
+import com.ideal.linked.toposoid.protocol.model.base.AnalyzedSentenceObject
+import com.ideal.linked.toposoid.protocol.model.base.CoveredPropositionNode
+import com.ideal.linked.toposoid.protocol.model.base.MatchedFeatureInfo
+import com.ideal.linked.toposoid.knowledgebase.model.KnowledgeBaseNode
+import com.ideal.linked.toposoid.knowledgebase.featurevector.model.FeatureVectorIdentifier
+import com.ideal.linked.common.DeploymentConverter.conf
 
 case class FeatureVectorSearchInfo(propositionId:String, sentenceId:String, sentenceType:Int, lang:String, featureId:String, similarity:Float)
 
@@ -51,5 +59,60 @@ object DeductionUtilsForSemiGlobal extends LazyLogging {
             }
         }
     }
+
+    def getCoveredPropositionEdges(aso:AnalyzedSentenceObject ,featureVectorSearchResult: FeatureVectorSearchResult, transversalState:TransversalState): List[CoveredPropositionEdge] = {
+
+        val (ids, similarities) = (featureVectorSearchResult.ids zip featureVectorSearchResult.similarities).foldLeft((List.empty[FeatureVectorIdentifier], List.empty[Float])) {
+            (acc, x) => {
+                x._1.sentenceType match {
+                case SentenceType.CLAIM.index => (acc._1 :+ x._1, acc._2 :+ x._2)
+                case _ => acc
+                }
+            }
+        }
+
+        val filteredResult = FeatureVectorSearchResult(ids, similarities, featureVectorSearchResult.statusInfo) 
+        val deductionUnitName = conf.getString("TOPOSOID_DEDUCTION_UNIT_NAME")
+        filteredResult.ids.size match {
+        case 0 => List.empty[CoveredPropositionEdge]
+        case _ => {        
+            val featureVectorSearchInfoList = DeductionUtilsForSemiGlobal.extractExistInNeo4JResultForSentence(filteredResult, aso.knowledgeBaseSemiGlobalNode.sentenceType, transversalState)        
+            val matchedKnowledgeNodes = featureVectorSearchInfoList.map(x => {
+                MatchedKnowledgeNode(
+                    propositionId = x.propositionId,
+                    sentenceId = x.sentenceId,
+                    nodeId = "",
+                    caseNameOnEdge = "",
+                    isDenialWord = false,
+                    nodeType = x.sentenceType,
+                    featureInfo = MatchedFeatureInfo(featureId = x.featureId, similarity = x.similarity)
+                )          
+                })
+
+                aso.edgeList.map(x => {
+                val sourceNode = aso.nodeMap.get(x.sourceId).get.asInstanceOf[KnowledgeBaseNode]
+                val destinationNode = aso.nodeMap.get(x.destinationId).get.asInstanceOf[KnowledgeBaseNode]
+                val sourceCoveredPropositionNode = CoveredPropositionNode(
+                    terminalId = sourceNode.nodeId,
+                    terminalSurface = sourceNode.predicateArgumentStructure.surface,
+                    terminalUrl = "",
+                    matchedKnowledgeNodes = matchedKnowledgeNodes,
+                    isConfirmed = true,
+                    deductionUnit = deductionUnitName
+                )
+
+                val destinationCoveredPropositionNode = CoveredPropositionNode(
+                    terminalId = destinationNode.nodeId,
+                    terminalSurface = destinationNode.predicateArgumentStructure.surface,
+                    terminalUrl = "",
+                    matchedKnowledgeNodes = matchedKnowledgeNodes,
+                    isConfirmed = true,
+                    deductionUnit = deductionUnitName
+                )
+                CoveredPropositionEdge(sourceCoveredPropositionNode, destinationCoveredPropositionNode)
+                }) 
+            }
+        }              
+  }    
 
 }
