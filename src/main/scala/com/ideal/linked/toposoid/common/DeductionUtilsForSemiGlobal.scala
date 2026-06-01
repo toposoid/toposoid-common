@@ -60,7 +60,7 @@ object DeductionUtilsForSemiGlobal extends LazyLogging {
         }
     }
 
-    def getCoveredPropositionEdges(aso:AnalyzedSentenceObject ,featureVectorSearchResult: FeatureVectorSearchResult, transversalState:TransversalState): List[CoveredPropositionEdge] = {
+    def getCoveredPropositionEdges(isConfirmed:Boolean, aso:AnalyzedSentenceObject ,featureVectorSearchResult: FeatureVectorSearchResult, transversalState:TransversalState): List[CoveredPropositionEdge] = {
 
         val (ids, similarities) = (featureVectorSearchResult.ids zip featureVectorSearchResult.similarities).foldLeft((List.empty[FeatureVectorIdentifier], List.empty[Float])) {
             (acc, x) => {
@@ -97,7 +97,7 @@ object DeductionUtilsForSemiGlobal extends LazyLogging {
                     terminalSurface = sourceNode.predicateArgumentStructure.surface,
                     terminalUrl = "",
                     matchedKnowledgeNodes = matchedKnowledgeNodes,
-                    isConfirmed = true,
+                    isConfirmed = isConfirmed,
                     deductionUnit = deductionUnitName
                 )
 
@@ -106,7 +106,7 @@ object DeductionUtilsForSemiGlobal extends LazyLogging {
                     terminalSurface = destinationNode.predicateArgumentStructure.surface,
                     terminalUrl = "",
                     matchedKnowledgeNodes = matchedKnowledgeNodes,
-                    isConfirmed = true,
+                    isConfirmed = isConfirmed,
                     deductionUnit = deductionUnitName
                 )
                 CoveredPropositionEdge(sourceCoveredPropositionNode, destinationCoveredPropositionNode)
