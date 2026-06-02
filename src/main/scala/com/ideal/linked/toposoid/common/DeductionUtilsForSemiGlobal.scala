@@ -34,8 +34,14 @@ case class FeatureVectorSearchInfo(propositionId:String, sentenceId:String, sent
 
 object DeductionUtilsForSemiGlobal extends LazyLogging {
 
-    def extractExistInNeo4JResultForSentence(featureVectorSearchResult: FeatureVectorSearchResult, originalSentenceType: Int, transversalState:TransversalState): List[FeatureVectorSearchInfo] = {
+    def extractExistInNeo4JResultForSentence(featureVectorSearchResult: FeatureVectorSearchResult, sentenceIdsForFilter:List[String], originalSentenceType: Int, transversalState:TransversalState): List[FeatureVectorSearchInfo] = {
+        
         val neo4jUtils = Neo4JUtilsImpl()
+        val sentenceIdFilterQuery = sentenceIdsForFilter.size match {
+            case 0 => ""
+            case _ => "AND n.sentenceId IN [%s]".format(sentenceIdsForFilter.mkString(","))
+        }
+
         (featureVectorSearchResult.ids zip featureVectorSearchResult.similarities).foldLeft(List.empty[FeatureVectorSearchInfo]) {
             (acc, x) => {
                 val idInfo = x._1
@@ -45,22 +51,36 @@ object DeductionUtilsForSemiGlobal extends LazyLogging {
                 val similarity = x._2
                 val nodeType: String = ToposoidUtils.getNodeType(idInfo.sentenceType, ScopeType.SEMIGLOBAL.index, FeatureType.SENTENCE.index)
                 //Check whether featureVectorSearchResult information exists in Neo4J
-                val query = "MATCH (n:%s) WHERE n.propositionId='%s' AND n.sentenceId='%s' RETURN n".format(nodeType, propositionId, featureId)
+                val query = "MATCH (n:%s) WHERE n.propositionId='%s' '%s' RETURN n".format(nodeType, propositionId, sentenceIdFilterQuery)
                 val jsonStr: String = neo4jUtils.getCypherQueryResult(query, "", transversalState)
                 val neo4jRecords: Neo4jRecords = Json.parse(jsonStr).as[Neo4jRecords]
                 neo4jRecords.records.size match {
                     case 0 => acc
                     case _ => {
+                        /*
                         val idInfoOnNeo4jSide = neo4jRecords.records.head.head.value.semiGlobalNode.get
                         //sentenceType returns the originalSentenceType of the argument
                         acc :+ FeatureVectorSearchInfo(idInfoOnNeo4jSide.propositionId, idInfoOnNeo4jSide.sentenceId, originalSentenceType, lang, featureId, similarity)
+                        */
+                        acc ::: neo4jRecords.records.map(y => {
+                            y.map(z => {
+                                val semiGlobalNode = z.value.semiGlobalNode.get
+                                FeatureVectorSearchInfo(semiGlobalNode.propositionId, semiGlobalNode.sentenceId, originalSentenceType, lang, featureId, similarity)
+                            })
+                        }).flatten 
                     }
                 }
             }
-        }
+        }.distinct
     }
 
     def getCoveredPropositionEdges(isConfirmed:Boolean, aso:AnalyzedSentenceObject ,featureVectorSearchResult: FeatureVectorSearchResult, transversalState:TransversalState): List[CoveredPropositionEdge] = {
+
+        //既にdeductionResultが設定されている場合は、EmbedingSetenceMatchが候補を列挙したことになる。
+        val sentenceIds = aso.deductionResult.coveredPropositionEdges.foldLeft(List.empty[String]){
+            (acc, x) =>
+                acc ++ x.sourceNode.matchedKnowledgeNodes.map(y => "'" + y.sentenceId + "'")
+        }.distinct
 
         val (ids, similarities) = (featureVectorSearchResult.ids zip featureVectorSearchResult.similarities).foldLeft((List.empty[FeatureVectorIdentifier], List.empty[Float])) {
             (acc, x) => {
@@ -71,12 +91,25 @@ object DeductionUtilsForSemiGlobal extends LazyLogging {
             }
         }
 
+
         val filteredResult = FeatureVectorSearchResult(ids, similarities, featureVectorSearchResult.statusInfo) 
         val deductionUnitName = conf.getString("TOPOSOID_DEDUCTION_UNIT_NAME")
         filteredResult.ids.size match {
         case 0 => List.empty[CoveredPropositionEdge]
         case _ => {        
-            val featureVectorSearchInfoList = DeductionUtilsForSemiGlobal.extractExistInNeo4JResultForSentence(filteredResult, aso.knowledgeBaseSemiGlobalNode.sentenceType, transversalState)        
+
+            val sentenceIdsForFilter = sentenceIds.size match {
+                case 0 => {
+                    //この場合、DeductionPhaseTypeがDEDUCTION_SENTENCE_BASEということになる。
+                    //この場合に限り、sentenceId = featureIdとなる。
+                    filteredResult.ids.map(x => x.featureId)
+                }
+                case _ => {
+                    sentenceIds
+                }
+            }
+
+            val featureVectorSearchInfoList = DeductionUtilsForSemiGlobal.extractExistInNeo4JResultForSentence(filteredResult, sentenceIdsForFilter, aso.knowledgeBaseSemiGlobalNode.sentenceType, transversalState)        
             val matchedKnowledgeNodes = featureVectorSearchInfoList.map(x => {
                 MatchedKnowledgeNode(
                     propositionId = x.propositionId,
