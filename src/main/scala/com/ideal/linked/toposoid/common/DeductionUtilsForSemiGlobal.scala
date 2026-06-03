@@ -51,7 +51,7 @@ object DeductionUtilsForSemiGlobal extends LazyLogging {
                 val similarity = x._2
                 val nodeType: String = ToposoidUtils.getNodeType(idInfo.sentenceType, ScopeType.SEMIGLOBAL.index, FeatureType.SENTENCE.index)
                 //Check whether featureVectorSearchResult information exists in Neo4J
-                val query = "MATCH (n:%s) WHERE n.propositionId='%s' '%s' RETURN n".format(nodeType, propositionId, sentenceIdFilterQuery)
+                val query = "MATCH (n:%s) WHERE n.propositionId='%s' %s RETURN n".format(nodeType, propositionId, sentenceIdFilterQuery)
                 val jsonStr: String = neo4jUtils.getCypherQueryResult(query, "", transversalState)
                 val neo4jRecords: Neo4jRecords = Json.parse(jsonStr).as[Neo4jRecords]
                 neo4jRecords.records.size match {
