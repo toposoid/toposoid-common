@@ -101,7 +101,7 @@ object DeductionUtilsForSemiGlobal extends LazyLogging {
                 case 0 => {
                     //この場合、DeductionPhaseTypeがDEDUCTION_SENTENCE_BASEということになる。
                     //この場合に限り、sentenceId = featureIdとなる。
-                    filteredResult.ids.map(x => x.featureId)
+                    filteredResult.ids.map(x => "'" + x.featureId + "'")
                 }
                 case _ => {
                     sentenceIds
