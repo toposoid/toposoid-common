@@ -91,7 +91,6 @@ object DeductionUtilsForSemiGlobal extends LazyLogging {
             }
         }
 
-
         val filteredResult = FeatureVectorSearchResult(ids, similarities, featureVectorSearchResult.statusInfo) 
         val deductionUnitName = conf.getString("TOPOSOID_DEDUCTION_UNIT_NAME")
         filteredResult.ids.size match {
@@ -120,30 +119,58 @@ object DeductionUtilsForSemiGlobal extends LazyLogging {
                     nodeType = x.sentenceType,
                     featureInfo = MatchedFeatureInfo(featureId = x.featureId, similarity = x.similarity)
                 )          
-                })
-
-                aso.edgeList.map(x => {
-                val sourceNode = aso.nodeMap.get(x.sourceId).get.asInstanceOf[KnowledgeBaseNode]
-                val destinationNode = aso.nodeMap.get(x.destinationId).get.asInstanceOf[KnowledgeBaseNode]
-                val sourceCoveredPropositionNode = CoveredPropositionNode(
-                    terminalId = sourceNode.nodeId,
-                    terminalSurface = sourceNode.predicateArgumentStructure.surface,
-                    terminalUrl = "",
-                    matchedKnowledgeNodes = matchedKnowledgeNodes,
-                    isConfirmed = isConfirmed,
-                    deductionUnit = deductionUnitName
-                )
-
-                val destinationCoveredPropositionNode = CoveredPropositionNode(
-                    terminalId = destinationNode.nodeId,
-                    terminalSurface = destinationNode.predicateArgumentStructure.surface,
-                    terminalUrl = "",
-                    matchedKnowledgeNodes = matchedKnowledgeNodes,
-                    isConfirmed = isConfirmed,
-                    deductionUnit = deductionUnitName
-                )
-                CoveredPropositionEdge(sourceCoveredPropositionNode, destinationCoveredPropositionNode)
-                }) 
+            })
+            
+            aso.deductionResult.coveredPropositionEdges.size match {
+                case 0 => {
+                    //coveredPropositionEdgesを新規作成
+                    aso.edgeList.map(x => {
+                        val sourceNode = aso.nodeMap.get(x.sourceId).get.asInstanceOf[KnowledgeBaseNode]
+                        val destinationNode = aso.nodeMap.get(x.destinationId).get.asInstanceOf[KnowledgeBaseNode]
+                        val sourceCoveredPropositionNode = CoveredPropositionNode(
+                            terminalId = sourceNode.nodeId,
+                            terminalSurface = sourceNode.predicateArgumentStructure.surface,
+                            terminalUrl = "",
+                            matchedKnowledgeNodes = matchedKnowledgeNodes,
+                            isConfirmed = isConfirmed,
+                            deductionUnit = deductionUnitName
+                        )
+                        val destinationCoveredPropositionNode = CoveredPropositionNode(
+                            terminalId = destinationNode.nodeId,
+                            terminalSurface = destinationNode.predicateArgumentStructure.surface,
+                            terminalUrl = "",
+                            matchedKnowledgeNodes = matchedKnowledgeNodes,
+                            isConfirmed = isConfirmed,
+                            deductionUnit = deductionUnitName
+                        )
+                        CoveredPropositionEdge(sourceCoveredPropositionNode, destinationCoveredPropositionNode)
+                    }) 
+                }
+                case _ => {
+                    //coveredPropositionEdgesを更新
+                    //Embedingsの場合は、coveredPropositionEdges全体の洗い替えとなるので、matchedKnowledgeNodesは追記とする。
+                    //過去の貢献のあった、feature情報も残す。
+                    aso.deductionResult.coveredPropositionEdges.map(x => {                        
+                        val updatedSourceNode = CoveredPropositionNode(
+                            terminalId = x.sourceNode.terminalId,
+                            terminalSurface = x.sourceNode.terminalSurface,
+                            terminalUrl = x.sourceNode.terminalUrl,
+                            matchedKnowledgeNodes = x.sourceNode.matchedKnowledgeNodes:::matchedKnowledgeNodes,
+                            isConfirmed = isConfirmed,
+                            deductionUnit = deductionUnitName
+                        )
+                        val updatedDestinationNode = CoveredPropositionNode(
+                            terminalId = x.destinationNode.terminalId,
+                            terminalSurface = x.destinationNode.terminalSurface,
+                            terminalUrl = x.destinationNode.terminalUrl,
+                            matchedKnowledgeNodes = x.destinationNode.matchedKnowledgeNodes:::matchedKnowledgeNodes,
+                            isConfirmed = isConfirmed,
+                            deductionUnit = deductionUnitName
+                        )
+                        CoveredPropositionEdge(updatedSourceNode, updatedDestinationNode)
+                    }) 
+                }
+            }                        
             }
         }              
   }    
