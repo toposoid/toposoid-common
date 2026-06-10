@@ -68,7 +68,7 @@ object InMemoryDbUtils {
   }
 
   def getEmbedingDeducitonUnitEndPoints(transversalState: TransversalState): Seq[Endpoint] = {
-    val userInfo = KeyValueStoreInfo(identifier = transversalState.userId, key = "DEDUCTION_UNIT_ENDPOINTS", value = "")
+    val userInfo = KeyValueStoreInfo(identifier = transversalState.userId, key = "EMBEDDING_DEDUCTION_UNIT_ENDPOINTS", value = "")
     val responseJson = ToposoidUtils.callComponent(
       Json.toJson(userInfo).toString(),
       conf.getString("TOPOSOID_IN_MEMORY_DB_WEB_HOST"),
@@ -109,7 +109,7 @@ object InMemoryDbUtils {
 
   }
   def getClauseDeducitonUnitEndPoints(transversalState: TransversalState): Seq[Endpoint] = {
-    val userInfo = KeyValueStoreInfo(identifier = transversalState.userId, key = "EMBEDDING_DEDUCTION_UNIT_ENDPOINTS", value = "")
+    val userInfo = KeyValueStoreInfo(identifier = transversalState.userId, key = "CLAUSE_DEDUCTION_UNIT_ENDPOINTS", value = "")
     val responseJson = ToposoidUtils.callComponent(
       Json.toJson(userInfo).toString(),
       conf.getString("TOPOSOID_IN_MEMORY_DB_WEB_HOST"),
@@ -149,7 +149,7 @@ object InMemoryDbUtils {
 
   }
   def getDeductionGroupEndPoints(transversalState: TransversalState): Seq[Endpoint] = {
-    val userInfo = KeyValueStoreInfo(identifier = transversalState.userId, key = "CLAUSE_DEDUCTION_UNIT_ENDPOINTS", value = "")
+    val userInfo = KeyValueStoreInfo(identifier = transversalState.userId, key = "DEDUCTION_GROUP_ENDPOINTS", value = "")
     val responseJson = ToposoidUtils.callComponent(
       Json.toJson(userInfo).toString(),
       conf.getString("TOPOSOID_IN_MEMORY_DB_WEB_HOST"),
