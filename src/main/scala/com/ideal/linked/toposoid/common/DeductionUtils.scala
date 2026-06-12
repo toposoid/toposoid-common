@@ -51,7 +51,13 @@ object DeductionUtils extends LazyLogging {
                     case 0 => {
                         aso.deductionResult.coveredPropositionEdges.size match {
                             case 0 => acc
-                            case _ => acc :+ Future(Option(aso.deductionResult.coveredPropositionEdges.filter(x => x.sourceNode.terminalId.equals(edge.sourceId) && x.destinationNode.terminalId.equals(edge.destinationId)).head))
+                            case _ => {
+                                val filteredCoveredPropositionEdges = aso.deductionResult.coveredPropositionEdges.filter(x => x.sourceNode.terminalId.equals(edge.sourceId) && x.destinationNode.terminalId.equals(edge.destinationId))
+                                filteredCoveredPropositionEdges.size match {
+                                    case 0 => acc
+                                    case _ => acc :+ Future(Option(filteredCoveredPropositionEdges.head))
+                                }                                
+                            }
                         }                
                     }
                     case _ => acc :+ Future(analyzeEdge(0, deductionQueries, edge, aso, Neo4JUtilsImpl(), transversalState))
