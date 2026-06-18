@@ -85,9 +85,9 @@ object InMemoryDbUtils {
   def setEmbedingDeducitonUnitEndPoints(endPoints: Seq[Endpoint], transversalState: TransversalState): Seq[Endpoint] = {
 
 
-    val deductionUnitHosts = Json.parse(conf.getString("TOPODOID_EMBEDDING_DEDUCTION_UNITS")).as[List[String]]
-    val deductionUnitPorts = Json.parse(conf.getString("TOPODOID_EMBEDDING_DEDUCTION_PORTS")).as[List[String]]
-    val deductionUnitNames = Json.parse(conf.getString("TOPODOID_EMBEDDING_DEDUCTION_NAMES")).as[List[String]]
+    val deductionUnitHosts = Json.parse(conf.getString("TOPOSOID_EMBEDDING_DEDUCTION_UNITS")).as[List[String]]
+    val deductionUnitPorts = Json.parse(conf.getString("TOPOSOID_EMBEDDING_DEDUCTION_PORTS")).as[List[String]]
+    val deductionUnitNames = Json.parse(conf.getString("TOPOSOID_EMBEDDING_DEDUCTION_NAMES")).as[List[String]]
 
     val defaultEndPoints: Seq[Endpoint] = deductionUnitHosts.lazyZip(deductionUnitPorts).lazyZip(deductionUnitNames).map { (x, y, z) =>
       Endpoint(x,y,z)
@@ -125,9 +125,9 @@ object InMemoryDbUtils {
 
   def setClauseDeducitonUnitEndPoints(endPoints: Seq[Endpoint], transversalState: TransversalState): Seq[Endpoint] = {
 
-    val deductionUnitHosts = Json.parse(conf.getString("TOPODOID_CLAUSE_DEDUCTION_UNITS")).as[List[String]]
-    val deductionUnitPorts = Json.parse(conf.getString("TOPODOID_CLAUSE_DEDUCTION_PORTS")).as[List[String]]
-    val deductionUnitNames = Json.parse(conf.getString("TOPODOID_CLAUSE_DEDUCTION_NAMES")).as[List[String]]
+    val deductionUnitHosts = Json.parse(conf.getString("TOPOSOID_CLAUSE_DEDUCTION_UNITS")).as[List[String]]
+    val deductionUnitPorts = Json.parse(conf.getString("TOPOSOID_CLAUSE_DEDUCTION_PORTS")).as[List[String]]
+    val deductionUnitNames = Json.parse(conf.getString("TOPOSOID_CLAUSE_DEDUCTION_NAMES")).as[List[String]]
 
     val defaultEndPoints: Seq[Endpoint] = deductionUnitHosts.lazyZip(deductionUnitPorts).lazyZip(deductionUnitNames).map { (x, y, z) =>
       Endpoint(x,y,z)
@@ -165,9 +165,9 @@ object InMemoryDbUtils {
 
   def setDeductionGroupEndPoints(endPoints: Seq[Endpoint], transversalState: TransversalState): Seq[Endpoint] = {
 
-    val deductionUnitHosts = Json.parse(conf.getString("TOPODOID_DEDUCTION_GROUP_UNITS")).as[List[String]]
-    val deductionUnitPorts = Json.parse(conf.getString("TOPODOID_DEDUCTION_GROUP_PORTS")).as[List[String]]
-    val deductionUnitNames = Json.parse(conf.getString("TOPODOID_DEDUCTION_GROUP_NAMES")).as[List[String]]
+    val deductionUnitHosts = Json.parse(conf.getString("TOPOSOID_DEDUCTION_GROUP_UNITS")).as[List[String]]
+    val deductionUnitPorts = Json.parse(conf.getString("TOPOSOID_DEDUCTION_GROUP_PORTS")).as[List[String]]
+    val deductionUnitNames = Json.parse(conf.getString("TOPOSOID_DEDUCTION_GROUP_NAMES")).as[List[String]]
 
     val defaultEndPoints: Seq[Endpoint] = deductionUnitHosts.lazyZip(deductionUnitPorts).lazyZip(deductionUnitNames).map { (x, y, z) =>
       Endpoint(x,y,z)
