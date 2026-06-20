@@ -138,18 +138,9 @@ object InMemoryDbUtils {
 
   def setEmbedingDeducitonUnitEndPoints(endPoints: Seq[Endpoint], transversalState: TransversalState): Seq[Endpoint] = {
 
-
-    val deductionUnitHosts = Json.parse(conf.getString("TOPOSOID_EMBEDDING_DEDUCTION_UNITS")).as[List[String]]
-    val deductionUnitPorts = Json.parse(conf.getString("TOPOSOID_EMBEDDING_DEDUCTION_PORTS")).as[List[String]]
-    val deductionUnitNames = Json.parse(conf.getString("TOPOSOID_EMBEDDING_DEDUCTION_NAMES")).as[List[String]]
-
-    val defaultEndPoints: Seq[Endpoint] = deductionUnitHosts.lazyZip(deductionUnitPorts).lazyZip(deductionUnitNames).map { (x, y, z) =>
-      Endpoint(x,y,z)
-    }.toSeq
-
     val updatedEndPoints: Seq[Endpoint] = Option(endPoints) match {
       case Some(x) => endPoints
-      case None => defaultEndPoints
+      case None => getDefaultEndPoints(DeductionPhaseType.DEDUCTION_SENTENCE_BASE, false)
     }
 
     val userInfo = KeyValueStoreInfo(identifier = transversalState.userId, key = "EMBEDDING_DEDUCTION_UNIT_ENDPOINTS", value = Json.toJson(updatedEndPoints).toString())
@@ -162,7 +153,7 @@ object InMemoryDbUtils {
     updatedEndPoints
 
   }
-  def getClauseDeducitonUnitEndPoints(transversalState: TransversalState): Seq[Endpoint] = {
+  def getClauseDeducitonUnitEndPoints(transversalState: TransversalState): Seq[Endpoint] = {    
     val userInfo = KeyValueStoreInfo(identifier = transversalState.userId, key = "CLAUSE_DEDUCTION_UNIT_ENDPOINTS", value = "")
     val responseJson = ToposoidUtils.callComponent(
       Json.toJson(userInfo).toString(),
@@ -179,19 +170,10 @@ object InMemoryDbUtils {
 
   def setClauseDeducitonUnitEndPoints(endPoints: Seq[Endpoint], transversalState: TransversalState): Seq[Endpoint] = {
 
-    val deductionUnitHosts = Json.parse(conf.getString("TOPOSOID_CLAUSE_DEDUCTION_UNITS")).as[List[String]]
-    val deductionUnitPorts = Json.parse(conf.getString("TOPOSOID_CLAUSE_DEDUCTION_PORTS")).as[List[String]]
-    val deductionUnitNames = Json.parse(conf.getString("TOPOSOID_CLAUSE_DEDUCTION_NAMES")).as[List[String]]
-
-    val defaultEndPoints: Seq[Endpoint] = deductionUnitHosts.lazyZip(deductionUnitPorts).lazyZip(deductionUnitNames).map { (x, y, z) =>
-      Endpoint(x,y,z)
-    }.toSeq
-
     val updatedEndPoints: Seq[Endpoint] = Option(endPoints) match {
       case Some(x) => endPoints
-      case None => defaultEndPoints
+      case None => getDefaultEndPoints(DeductionPhaseType.DEDUCTION_TERM_BASE, false)
     }
-
     val userInfo = KeyValueStoreInfo(identifier = transversalState.userId, key = "CLAUSE_DEDUCTION_UNIT_ENDPOINTS", value = Json.toJson(updatedEndPoints).toString())
     val responseJson = ToposoidUtils.callComponent(
       Json.toJson(userInfo).toString(),
@@ -202,6 +184,7 @@ object InMemoryDbUtils {
     updatedEndPoints
 
   }
+
   def getDeductionGroupEndPoints(transversalState: TransversalState): Seq[Endpoint] = {
     val userInfo = KeyValueStoreInfo(identifier = transversalState.userId, key = "DEDUCTION_GROUP_ENDPOINTS", value = "")
     val responseJson = ToposoidUtils.callComponent(
@@ -219,18 +202,9 @@ object InMemoryDbUtils {
 
   def setDeductionGroupEndPoints(endPoints: Seq[Endpoint], transversalState: TransversalState): Seq[Endpoint] = {
 
-    val deductionUnitHosts = Json.parse(conf.getString("TOPOSOID_DEDUCTION_GROUP_UNITS")).as[List[String]]
-    val deductionUnitPorts = Json.parse(conf.getString("TOPOSOID_DEDUCTION_GROUP_PORTS")).as[List[String]]
-    val deductionUnitNames = Json.parse(conf.getString("TOPOSOID_DEDUCTION_GROUP_NAMES")).as[List[String]]
-
-    val defaultEndPoints: Seq[Endpoint] = deductionUnitHosts.lazyZip(deductionUnitPorts).lazyZip(deductionUnitNames).map { (x, y, z) =>
-      Endpoint(x,y,z)
-    }.toSeq
-
-
     val updatedEndPoints: Seq[Endpoint] = Option(endPoints) match {
       case Some(x) => endPoints
-      case None => defaultEndPoints
+      case None => getDefaultEndPoints(null, true)
     }
 
     val userInfo = KeyValueStoreInfo(identifier = transversalState.userId, key = "DEDUCTION_GROUP_ENDPOINTS", value = Json.toJson(updatedEndPoints).toString())
