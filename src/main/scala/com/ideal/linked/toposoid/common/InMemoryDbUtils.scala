@@ -22,10 +22,13 @@ import com.ideal.linked.toposoid.protocol.model.frontend.Endpoint
 import com.ideal.linked.toposoid.protocol.model.redis.KeyValueStoreInfo
 import play.api.libs.json.Json
 
+
+
 object InMemoryDbUtils {
   /*
   private 
   */
+  /*
   def getEndPoints(transversalState: TransversalState): Seq[Endpoint] = {
     val userInfo = KeyValueStoreInfo(identifier = transversalState.userId, key = "DEDUCTION_UNIT_ENDPOINTS", value = "")
     val responseJson = ToposoidUtils.callComponent(
@@ -40,7 +43,7 @@ object InMemoryDbUtils {
       case _ => Json.parse(responseUserInfo.value).as[Seq[Endpoint]]
     }
   }
-
+  
   def setEndPoints(endPoints: Seq[Endpoint], transversalState: TransversalState): Seq[Endpoint] = {
 
     val defaultEndPoints: Seq[Endpoint] = Seq(
@@ -66,6 +69,57 @@ object InMemoryDbUtils {
     updatedEndPoints
 
   }
+  */
+
+  private def getDefaultEndPoints(deductionPhaseType:DeductionPhaseType, isGroupDeduction:Boolean):Seq[Endpoint] = {
+
+    Option(deductionPhaseType) match {
+        case Some(x) => {
+            deductionPhaseType match {
+                case DeductionPhaseType.DEDUCTION_PHRASE_BASE => {
+                  val deductionUnitHosts = Json.parse(conf.getString("TOPOSOID_HYBRID_DEDUCTION_UNITS")).as[List[String]]
+                  val deductionUnitPorts = Json.parse(conf.getString("TOPOSOID_HYBRID_DEDUCTION_PORTS")).as[List[String]]
+                  val deductionUnitNames = Json.parse(conf.getString("TOPOSOID_HYBRID_DEDUCTION_NAMES")).as[List[String]]
+                  deductionUnitHosts.lazyZip(deductionUnitPorts).lazyZip(deductionUnitNames).map { (x, y, z) =>
+                    Endpoint(x,y,z)
+                  }.toSeq
+                }
+                case DeductionPhaseType.DEDUCTION_SENTENCE_BASE => {
+                  val deductionUnitHosts = Json.parse(conf.getString("TOPOSOID_EMBEDDING_DEDUCTION_UNITS")).as[List[String]]
+                  val deductionUnitPorts = Json.parse(conf.getString("TOPOSOID_EMBEDDING_DEDUCTION_PORTS")).as[List[String]]
+                  val deductionUnitNames = Json.parse(conf.getString("TOPOSOID_EMBEDDING_DEDUCTION_NAMES")).as[List[String]]
+                  deductionUnitHosts.lazyZip(deductionUnitPorts).lazyZip(deductionUnitNames).map { (x, y, z) =>
+                    Endpoint(x,y,z)
+                  }.toSeq
+                }
+                case DeductionPhaseType.DEDUCTION_TERM_BASE => {
+                  val deductionUnitHosts = Json.parse(conf.getString("TOPOSOID_CLAUSE_DEDUCTION_UNITS")).as[List[String]]
+                  val deductionUnitPorts = Json.parse(conf.getString("TOPOSOID_CLAUSE_DEDUCTION_PORTS")).as[List[String]]
+                  val deductionUnitNames = Json.parse(conf.getString("TOPOSOID_CLAUSE_DEDUCTION_NAMES")).as[List[String]]
+                  deductionUnitHosts.lazyZip(deductionUnitPorts).lazyZip(deductionUnitNames).map { (x, y, z) =>
+                    Endpoint(x,y,z)
+                  }.toSeq
+                }
+                case _ => Seq.empty[Endpoint]
+            }
+        } 
+        case None => {
+          if(isGroupDeduction) {
+            val deductionUnitHosts = Json.parse(conf.getString("TOPOSOID_DEDUCTION_GROUP_UNITS")).as[List[String]]
+            val deductionUnitPorts = Json.parse(conf.getString("TOPOSOID_DEDUCTION_GROUP_PORTS")).as[List[String]]
+            val deductionUnitNames = Json.parse(conf.getString("TOPOSOID_DEDUCTION_GROUP_NAMES")).as[List[String]]
+            deductionUnitHosts.lazyZip(deductionUnitPorts).lazyZip(deductionUnitNames).map { (x, y, z) =>
+              Endpoint(x,y,z)
+            }.toSeq
+
+          }else{
+            Seq.empty[Endpoint]
+          }           
+        }
+    }
+
+    
+  }
 
   def getEmbedingDeducitonUnitEndPoints(transversalState: TransversalState): Seq[Endpoint] = {
     val userInfo = KeyValueStoreInfo(identifier = transversalState.userId, key = "EMBEDDING_DEDUCTION_UNIT_ENDPOINTS", value = "")
@@ -77,7 +131,7 @@ object InMemoryDbUtils {
       transversalState)
     val responseUserInfo: KeyValueStoreInfo = Json.parse(responseJson).as[KeyValueStoreInfo]
     responseUserInfo.value match {
-      case "" => setEndPoints(null, transversalState)
+      case "" => getDefaultEndPoints(DeductionPhaseType.DEDUCTION_SENTENCE_BASE, false)
       case _ => Json.parse(responseUserInfo.value).as[Seq[Endpoint]]
     }
   }
@@ -118,7 +172,7 @@ object InMemoryDbUtils {
       transversalState)
     val responseUserInfo: KeyValueStoreInfo = Json.parse(responseJson).as[KeyValueStoreInfo]
     responseUserInfo.value match {
-      case "" => setEndPoints(null, transversalState)
+      case "" => getDefaultEndPoints(DeductionPhaseType.DEDUCTION_TERM_BASE, false)
       case _ => Json.parse(responseUserInfo.value).as[Seq[Endpoint]]
     }
   }
@@ -158,7 +212,7 @@ object InMemoryDbUtils {
       transversalState)
     val responseUserInfo: KeyValueStoreInfo = Json.parse(responseJson).as[KeyValueStoreInfo]
     responseUserInfo.value match {
-      case "" => setEndPoints(null, transversalState)
+      case "" => getDefaultEndPoints(null, true)
       case _ => Json.parse(responseUserInfo.value).as[Seq[Endpoint]]
     }
   }
