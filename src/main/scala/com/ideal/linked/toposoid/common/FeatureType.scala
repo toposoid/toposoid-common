@@ -19,6 +19,7 @@ package com.ideal.linked.toposoid.common
 
 
 enum FeatureType(val index: Int):
+    case UNSPECIFIED extends FeatureType(-1)
     case SENTENCE extends FeatureType(0)
     case IMAGE extends FeatureType(1)
     case TABLE extends FeatureType(2)

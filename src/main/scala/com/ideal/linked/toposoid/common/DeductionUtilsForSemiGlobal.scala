@@ -74,7 +74,7 @@ object DeductionUtilsForSemiGlobal extends LazyLogging {
         }.distinct
     }
 
-    def getCoveredPropositionEdges(isConfirmed:Boolean, aso:AnalyzedSentenceObject ,featureVectorSearchResult: FeatureVectorSearchResult, transversalState:TransversalState): List[CoveredPropositionEdge] = {
+    def getCoveredPropositionEdges(isConfirmed:Boolean, aso:AnalyzedSentenceObject ,featureVectorSearchResult: FeatureVectorSearchResult, featureType:FeatureType, transversalState:TransversalState): List[CoveredPropositionEdge] = {
 
         //既にdeductionResultが設定されている場合は、EmbedingSetenceMatchが候補を列挙したことになる。
         val sentenceIds = aso.deductionResult.coveredPropositionEdges.foldLeft(List.empty[String]){
@@ -117,7 +117,8 @@ object DeductionUtilsForSemiGlobal extends LazyLogging {
                     caseNameOnEdge = "",
                     isDenialWord = false,
                     nodeType = x.sentenceType,
-                    featureInfo = MatchedFeatureInfo(featureId = x.featureId, similarity = x.similarity)
+                    featureInfo = MatchedFeatureInfo(featureId = x.featureId, featureType = featureType.index, similarity = x.similarity),
+                    deductionUnit = deductionUnitName
                 )          
             })
             
@@ -132,16 +133,15 @@ object DeductionUtilsForSemiGlobal extends LazyLogging {
                             terminalSurface = sourceNode.predicateArgumentStructure.surface,
                             terminalUrl = "",
                             matchedKnowledgeNodes = matchedKnowledgeNodes,
-                            isConfirmed = isConfirmed,
-                            deductionUnit = deductionUnitName
+                            isConfirmed = isConfirmed
+                            
                         )
                         val destinationCoveredPropositionNode = CoveredPropositionNode(
                             terminalId = destinationNode.nodeId,
                             terminalSurface = destinationNode.predicateArgumentStructure.surface,
                             terminalUrl = "",
                             matchedKnowledgeNodes = matchedKnowledgeNodes,
-                            isConfirmed = isConfirmed,
-                            deductionUnit = deductionUnitName
+                            isConfirmed = isConfirmed
                         )
                         CoveredPropositionEdge(sourceCoveredPropositionNode, destinationCoveredPropositionNode)
                     }) 
@@ -156,16 +156,14 @@ object DeductionUtilsForSemiGlobal extends LazyLogging {
                             terminalSurface = x.sourceNode.terminalSurface,
                             terminalUrl = x.sourceNode.terminalUrl,
                             matchedKnowledgeNodes = x.sourceNode.matchedKnowledgeNodes:::matchedKnowledgeNodes,
-                            isConfirmed = isConfirmed,
-                            deductionUnit = deductionUnitName
+                            isConfirmed = isConfirmed
                         )
                         val updatedDestinationNode = CoveredPropositionNode(
                             terminalId = x.destinationNode.terminalId,
                             terminalSurface = x.destinationNode.terminalSurface,
                             terminalUrl = x.destinationNode.terminalUrl,
                             matchedKnowledgeNodes = x.destinationNode.matchedKnowledgeNodes:::matchedKnowledgeNodes,
-                            isConfirmed = isConfirmed,
-                            deductionUnit = deductionUnitName
+                            isConfirmed = isConfirmed
                         )
                         CoveredPropositionEdge(updatedSourceNode, updatedDestinationNode)
                     }) 
