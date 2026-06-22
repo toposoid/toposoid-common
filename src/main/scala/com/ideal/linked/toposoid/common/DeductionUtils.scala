@@ -202,16 +202,16 @@ object DeductionUtils extends LazyLogging {
 
         val sourceMatchedKnowledgeNodes:List[MatchedKnowledgeNode] = sourceAlias match {
             case "" => List.empty[MatchedKnowledgeNode]
-            case _ => getMatchedKnowledgeNodes(edge, sourceKnowledgeNodes, nodeMap.get(edge.sourceId).get, featureSimilarityMap)
+            case _ => getMatchedKnowledgeNodes(edge, sourceKnowledgeNodes, nodeMap.get(edge.sourceId).get, featureSimilarityMap, deductionUnitName)
         }
 
         val destinationMatchedKnowledgeNodes:List[MatchedKnowledgeNode] = destinationAlias match {
             case "" =>  List.empty[MatchedKnowledgeNode]
-            case _ => getMatchedKnowledgeNodes(edge, destinationKnowledgeNodes, nodeMap.get(edge.destinationId).get, featureSimilarityMap)
+            case _ => getMatchedKnowledgeNodes(edge, destinationKnowledgeNodes, nodeMap.get(edge.destinationId).get, featureSimilarityMap, deductionUnitName)
         }
 
-        val sourceNode = CoveredPropositionNode(terminalId = edge.sourceId, terminalSurface = sourceNodeSurface, terminalUrl = "", matchedKnowledgeNodes=sourceMatchedKnowledgeNodes, isConfirmedSource, deductionUnitName)
-        val destinationNode = CoveredPropositionNode(terminalId = edge.destinationId, terminalSurface = destinationNodeSurface, terminalUrl = "", matchedKnowledgeNodes=destinationMatchedKnowledgeNodes, isConfirmedDestination, deductionUnitName)        
+        val sourceNode = CoveredPropositionNode(terminalId = edge.sourceId, terminalSurface = sourceNodeSurface, terminalUrl = "", matchedKnowledgeNodes=sourceMatchedKnowledgeNodes, isConfirmedSource)
+        val destinationNode = CoveredPropositionNode(terminalId = edge.destinationId, terminalSurface = destinationNodeSurface, terminalUrl = "", matchedKnowledgeNodes=destinationMatchedKnowledgeNodes, isConfirmedDestination)        
         CoveredPropositionEdge(sourceNode = sourceNode, destinationNode = destinationNode)
     }
 
@@ -219,9 +219,11 @@ object DeductionUtils extends LazyLogging {
         edge: KnowledgeBaseEdge, 
         serchedKnowledgeNodes:List[KnowledgeBaseNode | KnowledgeBaseSynonymNode | KnowledgeFeatureReference], 
         proopsitionNode: KnowledgeBaseNode,
-        featureSimilarityMap:Map[String, Float]):List[MatchedKnowledgeNode]= {
+        featureSimilarityMap:Map[String, Float],
+        deductionUnitName:String
+        ):List[MatchedKnowledgeNode]= {
         
-        val emptyMatchedFeatureInfo = MatchedFeatureInfo("", -1.0)
+        val emptyMatchedFeatureInfo = MatchedFeatureInfo("", FeatureType.UNSPECIFIED.index,  -1.0)
 
         serchedKnowledgeNodes.map(x => {
             x match {
@@ -233,7 +235,8 @@ object DeductionUtils extends LazyLogging {
                         caseNameOnEdge = edge.caseStr,
                         isDenialWord = a.predicateArgumentStructure.isDenialWord,
                         nodeType = a.predicateArgumentStructure.nodeType,
-                        featureInfo = emptyMatchedFeatureInfo
+                        featureInfo = emptyMatchedFeatureInfo,
+                        deductionUnit = deductionUnitName
                     )
                 }
                 case b:KnowledgeBaseSynonymNode => {
@@ -244,14 +247,15 @@ object DeductionUtils extends LazyLogging {
                         caseNameOnEdge = edge.caseStr,
                         isDenialWord = proopsitionNode.predicateArgumentStructure.isDenialWord,
                         nodeType = proopsitionNode.predicateArgumentStructure.nodeType, 
-                        featureInfo = emptyMatchedFeatureInfo
+                        featureInfo = emptyMatchedFeatureInfo,
+                        deductionUnit = deductionUnitName
                     )
                 }
                 case c:KnowledgeFeatureReference => {
 
                     val matchedFeatureInfo = c.featureType match {
                         case FeatureType.IMAGE.index => {
-                            MatchedFeatureInfo(c.featureId, featureSimilarityMap.getOrElse(c.featureId, -1.0F))
+                            MatchedFeatureInfo(c.featureId, FeatureType.IMAGE.index, featureSimilarityMap.getOrElse(c.featureId, -1.0F))
                         }
                         case _ => {
                             emptyMatchedFeatureInfo    
@@ -265,7 +269,8 @@ object DeductionUtils extends LazyLogging {
                         caseNameOnEdge = edge.caseStr,
                         isDenialWord = proopsitionNode.predicateArgumentStructure.isDenialWord,
                         nodeType = proopsitionNode.predicateArgumentStructure.nodeType, 
-                        featureInfo = matchedFeatureInfo 
+                        featureInfo = matchedFeatureInfo,
+                        deductionUnit = deductionUnitName 
                     )
                 }
             }}
