@@ -110,11 +110,11 @@ object DeductionUtils extends LazyLogging {
             val destinationMorphemes = destinationNode.predicateArgumentStructure.morphemes
             val isVerbOrNounOnSource = sourceNode.localContext.lang match {
                 case "ja_JP" =>  sourceMorphemes.filter(x => x.split(",").toList.contains("動詞")).size > 0 || sourceMorphemes.filter(x => x.split(",").toList.contains("名詞")).size > 0
-                case "en_US" => sourceMorphemes.filter(x => x.split(",").toList.contains("VERB")).size > 0  || sourceMorphemes.filter(x => x.split(",").toList.contains("NOUN")).size > 0
+                case "en_US" => sourceMorphemes.filter(x => x.split(",").toList.contains("VERB")).size > 0  || sourceMorphemes.filter(x => x.split(",").toList.contains("NOUN")).size > 0 || sourceMorphemes.filter(x => x.split(",").toList.contains("PROPN")).size > 0
             }
             val isVerbOrNounOnDestination = destinationNode.localContext.lang match {
                 case "ja_JP" =>  destinationMorphemes.filter(x => x.split(",").toList.contains("動詞")).size > 0 || destinationMorphemes.filter(x => x.split(",").toList.contains("名詞")).size > 0
-                case "en_US" => destinationMorphemes.filter(x => x.split(",").toList.contains("VERB")).size > 0  || destinationMorphemes.filter(x => x.split(",").toList.contains("NOUN")).size > 0
+                case "en_US" => destinationMorphemes.filter(x => x.split(",").toList.contains("VERB")).size > 0  || destinationMorphemes.filter(x => x.split(",").toList.contains("NOUN")).size > 0 || sourceMorphemes.filter(x => x.split(",").toList.contains("PROPN")).size > 0
             }
 
             deductionQueries(idx).relationMatchState match {
@@ -256,6 +256,9 @@ object DeductionUtils extends LazyLogging {
                     val matchedFeatureInfo = c.featureType match {
                         case FeatureType.IMAGE.index => {
                             MatchedFeatureInfo(c.featureId, FeatureType.IMAGE.index, featureSimilarityMap.getOrElse(c.featureId, -1.0F))
+                        }
+                        case FeatureType.TABLE.index => {
+                            MatchedFeatureInfo(c.featureId, FeatureType.TABLE.index, featureSimilarityMap.getOrElse(c.featureId, -1.0F))
                         }
                         case _ => {
                             emptyMatchedFeatureInfo    
