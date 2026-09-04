@@ -114,7 +114,7 @@ object DeductionUtils extends LazyLogging {
             }
             val isVerbOrNounOnDestination = destinationNode.localContext.lang match {
                 case "ja_JP" =>  destinationMorphemes.filter(x => x.split(",").toList.contains("動詞")).size > 0 || destinationMorphemes.filter(x => x.split(",").toList.contains("名詞")).size > 0
-                case "en_US" => destinationMorphemes.filter(x => x.split(",").toList.contains("VERB")).size > 0  || destinationMorphemes.filter(x => x.split(",").toList.contains("NOUN")).size > 0 || sourceMorphemes.filter(x => x.split(",").toList.contains("PROPN")).size > 0
+                case "en_US" => destinationMorphemes.filter(x => x.split(",").toList.contains("VERB")).size > 0  || destinationMorphemes.filter(x => x.split(",").toList.contains("NOUN")).size > 0 || destinationMorphemes.filter(x => x.split(",").toList.contains("PROPN")).size > 0
             }
 
             deductionQueries(idx).relationMatchState match {
