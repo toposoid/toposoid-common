@@ -34,7 +34,7 @@ case class FeatureVectorSearchInfo(propositionId:String, sentenceId:String, sent
 
 object DeductionUtilsForSemiGlobal extends LazyLogging {
 
-    def extractExistInNeo4JResultForSentence(featureVectorSearchResult: FeatureVectorSearchResult, sentenceIdsForFilter:List[String], originalSentenceType: Int, transversalState:TransversalState): List[FeatureVectorSearchInfo] = {
+    private def extractExistInNeo4JResultForSentence(featureVectorSearchResult: FeatureVectorSearchResult, sentenceIdsForFilter:List[String], originalSentenceType: Int, featureType:FeatureType, existDenialWord:Boolean, transversalState:TransversalState): List[FeatureVectorSearchInfo] = {
         
         val neo4jUtils = Neo4JUtilsImpl()
         val sentenceIdFilterQuery = sentenceIdsForFilter.size match {
@@ -57,22 +57,40 @@ object DeductionUtilsForSemiGlobal extends LazyLogging {
                 neo4jRecords.records.size match {
                     case 0 => acc
                     case _ => {
-                        /*
-                        val idInfoOnNeo4jSide = neo4jRecords.records.head.head.value.semiGlobalNode.get
-                        //sentenceType returns the originalSentenceType of the argument
-                        acc :+ FeatureVectorSearchInfo(idInfoOnNeo4jSide.propositionId, idInfoOnNeo4jSide.sentenceId, originalSentenceType, lang, featureId, similarity)
-                        */
-                        acc ::: neo4jRecords.records.map(y => {
-                            y.map(z => {
-                                val semiGlobalNode = z.value.semiGlobalNode.get
-                                FeatureVectorSearchInfo(semiGlobalNode.propositionId, semiGlobalNode.sentenceId, originalSentenceType, lang, featureId, similarity)
-                            })
-                        }).flatten 
+                        checkNegativeMatch(neo4jUtils, featureId, featureType, existDenialWord, transversalState) match {
+                            case true =>{
+                                acc ::: neo4jRecords.records.map(y => {
+                                    y.map(z => {
+                                        val semiGlobalNode = z.value.semiGlobalNode.get
+                                        FeatureVectorSearchInfo(semiGlobalNode.propositionId, semiGlobalNode.sentenceId, originalSentenceType, lang, featureId, similarity)
+                                    })
+                                }).flatten 
+                            }
+                            case _ => {
+                                acc
+                            }
+                        }                        
                     }
                 }
             }
         }.distinct
     }
+
+    //SentenceIdごとに文末の否定、肯定の一致があるかチェックする。
+    private def checkNegativeMatch(neo4jUtils:Neo4JUtilsImpl, sentenceId:String, featureType:FeatureType, existDenialWord:Boolean, transversalState:TransversalState): Boolean = {
+        featureType match {
+            case FeatureType.SENTENCE => {
+                val query = "MATCH (n) WHERE n.sentenceId='%s' AND n.isDenialWord='%s' AND (n.caseType='ROOT' OR n.caseType='文末') RETURN n".format(sentenceId, existDenialWord)
+                val jsonStr: String = neo4jUtils.getCypherQueryResult(query, "", transversalState)
+                val neo4jRecords: Neo4jRecords = Json.parse(jsonStr).as[Neo4jRecords]
+                neo4jRecords.records.size > 0
+            }
+            case _ => {
+                true
+            }
+        }
+    }
+
 
     def getCoveredPropositionEdges(isConfirmed:Boolean, aso:AnalyzedSentenceObject ,featureVectorSearchResult: FeatureVectorSearchResult, featureType:FeatureType, transversalState:TransversalState): List[CoveredPropositionEdge] = {
 
@@ -107,8 +125,8 @@ object DeductionUtilsForSemiGlobal extends LazyLogging {
                     sentenceIds
                 }
             }
-
-            val featureVectorSearchInfoList = DeductionUtilsForSemiGlobal.extractExistInNeo4JResultForSentence(filteredResult, sentenceIdsForFilter, aso.knowledgeBaseSemiGlobalNode.sentenceType, transversalState)        
+            val existDenialWord:Boolean = aso.nodeMap.filter(x => x._2.predicateArgumentStructure.isDenialWord && (x._2.predicateArgumentStructure.caseType.equals("文末") || x._2.predicateArgumentStructure.caseType.equals("ROOT"))).size > 0
+            val featureVectorSearchInfoList = DeductionUtilsForSemiGlobal.extractExistInNeo4JResultForSentence(filteredResult, sentenceIdsForFilter, aso.knowledgeBaseSemiGlobalNode.sentenceType, featureType, existDenialWord, transversalState)        
             val matchedKnowledgeNodes = featureVectorSearchInfoList.map(x => {
                 MatchedKnowledgeNode(
                     propositionId = x.propositionId,
