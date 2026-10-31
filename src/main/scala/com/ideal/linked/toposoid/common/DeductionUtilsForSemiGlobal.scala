@@ -34,7 +34,7 @@ case class FeatureVectorSearchInfo(propositionId:String, sentenceId:String, sent
 
 object DeductionUtilsForSemiGlobal extends LazyLogging {
 
-    private def extractExistInNeo4JResultForSentence(featureVectorSearchResult: FeatureVectorSearchResult, sentenceIdsForFilter:List[String], originalSentenceType: Int, featureType:FeatureType, existDenialWord:Boolean, transversalState:TransversalState): List[FeatureVectorSearchInfo] = {
+    private def extractExistInNeo4JResultForSentence(featureVectorSearchResult: FeatureVectorSearchResult, sentenceIdsForFilter:List[String], originalSentenceType: Int, featureType:FeatureType, existDenialWord:Boolean, transversalState:TransversalState): List[(FeatureVectorSearchInfo, Boolean)] = {
         
         val neo4jUtils = Neo4JUtilsImpl()
         val sentenceIdFilterQuery = sentenceIdsForFilter.size match {
@@ -42,7 +42,7 @@ object DeductionUtilsForSemiGlobal extends LazyLogging {
             case _ => "AND n.sentenceId IN [%s]".format(sentenceIdsForFilter.mkString(","))
         }
 
-        (featureVectorSearchResult.ids zip featureVectorSearchResult.similarities).foldLeft(List.empty[FeatureVectorSearchInfo]) {
+        (featureVectorSearchResult.ids zip featureVectorSearchResult.similarities).foldLeft(List.empty[(FeatureVectorSearchInfo, Boolean)]) {
             (acc, x) => {
                 val idInfo = x._1
                 val propositionId = idInfo.superiorId
@@ -57,19 +57,13 @@ object DeductionUtilsForSemiGlobal extends LazyLogging {
                 neo4jRecords.records.size match {
                     case 0 => acc
                     case _ => {
-                        checkNegativeMatch(neo4jUtils, featureId, featureType, existDenialWord, transversalState) match {
-                            case true =>{
-                                acc ::: neo4jRecords.records.map(y => {
-                                    y.map(z => {
-                                        val semiGlobalNode = z.value.semiGlobalNode.get
-                                        FeatureVectorSearchInfo(semiGlobalNode.propositionId, semiGlobalNode.sentenceId, originalSentenceType, lang, featureId, similarity)
-                                    })
-                                }).flatten 
-                            }
-                            case _ => {
-                                acc
-                            }
-                        }                        
+                        val isNegativeMeaning = checkNegativeMatch(neo4jUtils, featureId, featureType, existDenialWord, transversalState)
+                        acc ::: neo4jRecords.records.map(y => {
+                            y.map(z => {
+                                val semiGlobalNode = z.value.semiGlobalNode.get
+                                (FeatureVectorSearchInfo(semiGlobalNode.propositionId, semiGlobalNode.sentenceId, originalSentenceType, lang, featureId, similarity), isNegativeMeaning)
+                            })
+                        }).flatten                         
                     }
                 }
             }
@@ -86,7 +80,7 @@ object DeductionUtilsForSemiGlobal extends LazyLogging {
                 neo4jRecords.records.size > 0
             }
             case _ => {
-                true
+                false
             }
         }
     }
@@ -129,14 +123,15 @@ object DeductionUtilsForSemiGlobal extends LazyLogging {
             val featureVectorSearchInfoList = DeductionUtilsForSemiGlobal.extractExistInNeo4JResultForSentence(filteredResult, sentenceIdsForFilter, aso.knowledgeBaseSemiGlobalNode.sentenceType, featureType, existDenialWord, transversalState)        
             val matchedKnowledgeNodes = featureVectorSearchInfoList.map(x => {
                 MatchedKnowledgeNode(
-                    propositionId = x.propositionId,
-                    sentenceId = x.sentenceId,
+                    propositionId = x._1.propositionId,
+                    sentenceId = x._1.sentenceId,
                     nodeId = "",
                     caseNameOnEdge = "",
                     isDenialWord = false,
-                    nodeType = x.sentenceType,
-                    featureInfo = MatchedFeatureInfo(featureId = x.featureId, featureType = featureType.index, similarity = x.similarity),
-                    deductionUnit = deductionUnitName
+                    nodeType = x._1.sentenceType,
+                    featureInfo = MatchedFeatureInfo(featureId = x._1.featureId, featureType = featureType.index, similarity = x._1.similarity),
+                    deductionUnit = deductionUnitName,
+                    isNegativeMeaning = x._2
                 )          
             })
             
