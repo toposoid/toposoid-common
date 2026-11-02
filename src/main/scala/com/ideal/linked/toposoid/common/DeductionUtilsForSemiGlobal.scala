@@ -77,7 +77,7 @@ object DeductionUtilsForSemiGlobal extends LazyLogging {
                 val query = "MATCH (n) WHERE n.sentenceId='%s' AND n.isDenialWord='%s' AND (n.caseType='ROOT' OR n.caseType='文末') RETURN n".format(sentenceId, existDenialWord)
                 val jsonStr: String = neo4jUtils.getCypherQueryResult(query, "", transversalState)
                 val neo4jRecords: Neo4jRecords = Json.parse(jsonStr).as[Neo4jRecords]
-                neo4jRecords.records.size > 0
+                neo4jRecords.records.size == 0
             }
             case _ => {
                 false
