@@ -18,7 +18,8 @@
 package com.ideal.linked.toposoid.common
 
 enum AuthenticityType(val index: Int) {
-  case FALSE extends AuthenticityType(0)
-  case TRUE extends AuthenticityType(1)
-  case UNKNOWN extends AuthenticityType(2)  
+  case INSUFFICIENT extends AuthenticityType(0)
+  case SUPPORTED extends AuthenticityType(1)
+  case REFUTED extends AuthenticityType(2)
+  case CONFLICTING extends AuthenticityType(3)  
 }
