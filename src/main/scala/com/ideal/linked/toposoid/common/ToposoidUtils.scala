@@ -313,7 +313,7 @@ object ToposoidUtils extends LazyLogging{
 
     val defaultDeductionResult = DeductionResult(
       status = false,
-      authenticityType = AuthenticityType.UNKNOWN.index,
+      authenticityType = AuthenticityType.INSUFFICIENT.index,
       coveredPropositionEdges = List.empty[CoveredPropositionEdge],
       evidenceKnowledgeList = List.empty[KnowledgeBaseSideInfo]
     )
