@@ -46,12 +46,9 @@ object DeductionUtils extends LazyLogging {
         val edges:List[KnowledgeBaseEdge] = getUnsettledEdges(aso)
 
         //既に前のプロセスで否定表現が確認できている場合はその結果を利用するために取得。
-        val isNegativeMeaning:Boolean = aso.deductionResult.evidenceKnowledgeList.size match {
-            case 0 => {
-                val existDenialWord:Boolean = aso.nodeMap.filter(x => x._2.predicateArgumentStructure.isDenialWord && (x._2.predicateArgumentStructure.caseType.equals("文末") || x._2.predicateArgumentStructure.caseType.equals("ROOT"))).size > 0
-                checkNegativeMatch(Neo4JUtilsImpl(), aso.knowledgeBaseSemiGlobalNode.sentenceId, existDenialWord, transversalState)                
-            }
-            case _ => aso.deductionResult.evidenceKnowledgeList.head.isNegativeMeaning
+        val isNegativeMeaningMap:Map[String,Boolean] = aso.deductionResult.evidenceKnowledgeList.size match {
+            case 0 => Map.empty[String, Boolean]
+            case _ => aso.deductionResult.evidenceKnowledgeList.map(x => (x.sentenceId -> x.isNegativeMeaning)).toMap[String, Boolean]
         }                
 
         val futures: List[Future[Option[CoveredPropositionEdge]]] = edges.foldLeft(List.empty[Future[Option[CoveredPropositionEdge]]]){
@@ -70,7 +67,7 @@ object DeductionUtils extends LazyLogging {
                             }
                         }                
                     }
-                    case _ => acc :+ Future(analyzeEdge(0, deductionQueries, edge, aso, Neo4JUtilsImpl(), isNegativeMeaning, transversalState))
+                    case _ => acc :+ Future(analyzeEdge(0, deductionQueries, edge, aso, Neo4JUtilsImpl(), isNegativeMeaningMap, transversalState))
                 }        
             }
         }         
@@ -95,15 +92,7 @@ object DeductionUtils extends LazyLogging {
         })    
     }
 
-    //SentenceIdごとに文末の否定、肯定の一致があるかチェックする。
-    private def checkNegativeMatch(neo4jUtils:Neo4JUtilsImpl, sentenceId:String, existDenialWord:Boolean, transversalState:TransversalState): Boolean = {
-        val query = "MATCH (n) WHERE n.sentenceId='%s' AND n.isDenialWord='%s' AND (n.caseType='ROOT' OR n.caseType='文末') RETURN n".format(sentenceId, existDenialWord)
-        val jsonStr: String = neo4jUtils.getCypherQueryResult(query, "", transversalState)
-        val neo4jRecords: Neo4jRecords = Json.parse(jsonStr).as[Neo4jRecords]
-        neo4jRecords.records.size == 0
-    }
-
-    private def analyzeEdge(idx:Int, deductionQueries:List[DeductionQuery],edge:KnowledgeBaseEdge, aso:AnalyzedSentenceObject, neo4JUtils:Neo4JUtilsImpl, isNegativeMeaning:Boolean, transversalState:TransversalState):Option[CoveredPropositionEdge] = {
+    private def analyzeEdge(idx:Int, deductionQueries:List[DeductionQuery],edge:KnowledgeBaseEdge, aso:AnalyzedSentenceObject, neo4JUtils:Neo4JUtilsImpl, isNegativeMeaningMap:Map[String,Boolean], transversalState:TransversalState):Option[CoveredPropositionEdge] = {
         val nodeMap = aso.nodeMap
         val sourceNode = nodeMap.get(edge.sourceId).get.asInstanceOf[KnowledgeBaseNode]
         val destinationNode = nodeMap.get(edge.destinationId).get.asInstanceOf[KnowledgeBaseNode]
@@ -120,7 +109,7 @@ object DeductionUtils extends LazyLogging {
 
         //クエリを実行する必要のない場合は、早めに判断し次のクエリを実行を促す。
         if(!deductionQueries(idx).isSourceConfirmed == isSourceConfirmed || !deductionQueries(idx).isDestinationConfirmed == isDestinationConfirmed){
-            if(idx + 1 < deductionQueries.size) analyzeEdge(idx+1, deductionQueries, edge, aso, neo4JUtils:Neo4JUtilsImpl, isNegativeMeaning, transversalState:TransversalState)
+            if(idx + 1 < deductionQueries.size) analyzeEdge(idx+1, deductionQueries, edge, aso, neo4JUtils:Neo4JUtilsImpl, isNegativeMeaningMap, transversalState:TransversalState)
             else coveredPropositionEdge  
         }else{
 
@@ -137,49 +126,49 @@ object DeductionUtils extends LazyLogging {
 
             deductionQueries(idx).relationMatchState match {
                 case RelationMatchState.MATCHED_BOTH => {        
-                    analyze(idx, deductionQueries, edge, nodeMap, neo4JUtils, isNegativeMeaning, transversalState) match {
+                    analyze(idx, deductionQueries, edge, nodeMap, neo4JUtils, isNegativeMeaningMap, transversalState) match {
                     case Some(x) => Option(x)
                     case _ => {
-                        if(idx + 1 < deductionQueries.size) analyzeEdge(idx+1, deductionQueries, edge, aso, neo4JUtils:Neo4JUtilsImpl, isNegativeMeaning, transversalState:TransversalState)
+                        if(idx + 1 < deductionQueries.size) analyzeEdge(idx+1, deductionQueries, edge, aso, neo4JUtils:Neo4JUtilsImpl, isNegativeMeaningMap, transversalState:TransversalState)
                         else coveredPropositionEdge
                     }}
                 }
                 case RelationMatchState.MATCHED_SOURCE_NODE_ONLY => {
                     if(isVerbOrNounOnDestination){
-                    analyze(idx, deductionQueries, edge, nodeMap, neo4JUtils, isNegativeMeaning, transversalState) match {
+                    analyze(idx, deductionQueries, edge, nodeMap, neo4JUtils, isNegativeMeaningMap, transversalState) match {
                         case Some(x) => Option(x)
                         case _ => {
-                        if(idx + 1 < deductionQueries.size) analyzeEdge(idx+1, deductionQueries, edge, aso, neo4JUtils:Neo4JUtilsImpl, isNegativeMeaning, transversalState:TransversalState)
+                        if(idx + 1 < deductionQueries.size) analyzeEdge(idx+1, deductionQueries, edge, aso, neo4JUtils:Neo4JUtilsImpl, isNegativeMeaningMap, transversalState:TransversalState)
                         else coveredPropositionEdge  
                         }}          
                     }else {
-                    if(idx + 1 < deductionQueries.size) analyzeEdge(idx+1, deductionQueries, edge, aso, neo4JUtils:Neo4JUtilsImpl, isNegativeMeaning, transversalState:TransversalState)
+                    if(idx + 1 < deductionQueries.size) analyzeEdge(idx+1, deductionQueries, edge, aso, neo4JUtils:Neo4JUtilsImpl, isNegativeMeaningMap, transversalState:TransversalState)
                     else coveredPropositionEdge        
                     }
                 }
                 case RelationMatchState.MATCHED_TARGET_NODE_ONLY => {
                     if(isVerbOrNounOnSource) {
-                    analyze(idx, deductionQueries, edge, nodeMap, neo4JUtils, isNegativeMeaning, transversalState) match {
+                    analyze(idx, deductionQueries, edge, nodeMap, neo4JUtils, isNegativeMeaningMap, transversalState) match {
                         case Some(x) => Option(x)
                         case _ => {
-                        if(idx + 1 < deductionQueries.size) analyzeEdge(idx+1, deductionQueries, edge, aso, neo4JUtils:Neo4JUtilsImpl, isNegativeMeaning, transversalState:TransversalState)
+                        if(idx + 1 < deductionQueries.size) analyzeEdge(idx+1, deductionQueries, edge, aso, neo4JUtils:Neo4JUtilsImpl, isNegativeMeaningMap, transversalState:TransversalState)
                         else coveredPropositionEdge  
                         }}          
                     }else {
-                    if(idx + 1 < deductionQueries.size) analyzeEdge(idx+1, deductionQueries, edge, aso, neo4JUtils:Neo4JUtilsImpl, isNegativeMeaning, transversalState:TransversalState)
+                    if(idx + 1 < deductionQueries.size) analyzeEdge(idx+1, deductionQueries, edge, aso, neo4JUtils:Neo4JUtilsImpl, isNegativeMeaningMap, transversalState:TransversalState)
                     else coveredPropositionEdge        
                     }
                 }
                 case RelationMatchState.NOT_MATCHED_BOTH => {
                     if(isVerbOrNounOnSource && isVerbOrNounOnDestination){
-                    analyze(idx, deductionQueries, edge, nodeMap, neo4JUtils, isNegativeMeaning, transversalState) match {
+                    analyze(idx, deductionQueries, edge, nodeMap, neo4JUtils, isNegativeMeaningMap, transversalState) match {
                         case Some(x) => Option(x)
                         case _ => {
-                        if(idx + 1 < deductionQueries.size) analyzeEdge(idx+1, deductionQueries, edge, aso, neo4JUtils:Neo4JUtilsImpl, isNegativeMeaning, transversalState:TransversalState)
+                        if(idx + 1 < deductionQueries.size) analyzeEdge(idx+1, deductionQueries, edge, aso, neo4JUtils:Neo4JUtilsImpl, isNegativeMeaningMap, transversalState:TransversalState)
                         else coveredPropositionEdge  
                         }}          
                     }else {
-                    if(idx + 1 < deductionQueries.size) analyzeEdge(idx+1, deductionQueries, edge, aso, neo4JUtils:Neo4JUtilsImpl, isNegativeMeaning, transversalState:TransversalState)
+                    if(idx + 1 < deductionQueries.size) analyzeEdge(idx+1, deductionQueries, edge, aso, neo4JUtils:Neo4JUtilsImpl, isNegativeMeaningMap, transversalState:TransversalState)
                     else coveredPropositionEdge        
                     }
                 }
@@ -187,20 +176,20 @@ object DeductionUtils extends LazyLogging {
         }
     }
   
-    private def analyze(idx:Int, deductionQueries:List[DeductionQuery],edge:KnowledgeBaseEdge, nodeMap: Map[String, KnowledgeBaseNode], neo4JUtils:Neo4JUtilsImpl, isNegativeMeaning:Boolean, transversalState:TransversalState):Option[CoveredPropositionEdge] = {
+    private def analyze(idx:Int, deductionQueries:List[DeductionQuery],edge:KnowledgeBaseEdge, nodeMap: Map[String, KnowledgeBaseNode], neo4JUtils:Neo4JUtilsImpl, isNegativeMeaningMap:Map[String,Boolean], transversalState:TransversalState):Option[CoveredPropositionEdge] = {
         val deductionUnitName = conf.getString("TOPOSOID_DEDUCTION_UNIT_NAME")
         val jsonStr: String = neo4JUtils.getCypherQueryResult(deductionQueries(idx).query, "", transversalState)
         //If there is even one that does not match, it is useless to search further
         if (!jsonStr.equals("""{"records":[]}""")) {
             //ヒットするものがある場合
             val neo4jRecords: Neo4jRecords = Json.parse(jsonStr).as[Neo4jRecords]    
-            Option(DeductionUtils.getCoveredPropositionEdge(edge, deductionQueries(idx).sourceAlias, deductionQueries(idx).destinationAlias, nodeMap,  neo4jRecords, deductionQueries(idx).relationMatchState, deductionUnitName, isNegativeMeaning, deductionQueries(idx).featureSimilarityMap))        
+            Option(DeductionUtils.getCoveredPropositionEdge(edge, deductionQueries(idx).sourceAlias, deductionQueries(idx).destinationAlias, nodeMap,  neo4jRecords, deductionQueries(idx).relationMatchState, deductionUnitName, isNegativeMeaningMap, transversalState:TransversalState, deductionQueries(idx).featureSimilarityMap))        
         }else{
             None
         }
     }
 
-    private def getCoveredPropositionEdge(edge: KnowledgeBaseEdge, sourceAlias:String, destinationAlias:String, nodeMap:Map[String, KnowledgeBaseNode], neo4jRecords: Neo4jRecords, relationMatchState:RelationMatchState, deductionUnitName:String, isNegativeMeaning:Boolean, featureSimilarityMap:Map[String, Float] = Map.empty[String, Float]):CoveredPropositionEdge = {
+    private def getCoveredPropositionEdge(edge: KnowledgeBaseEdge, sourceAlias:String, destinationAlias:String, nodeMap:Map[String, KnowledgeBaseNode], neo4jRecords: Neo4jRecords, relationMatchState:RelationMatchState, deductionUnitName:String, isNegativeMeaningMap:Map[String,Boolean], transversalState:TransversalState, featureSimilarityMap:Map[String, Float] = Map.empty[String, Float]):CoveredPropositionEdge = {
         //一旦どちらかのノードが埋まっていれば推論を進めるものとする。        
         val (isConfirmedSource, isConfirmedDestination)= relationMatchState match {
             case RelationMatchState.MATCHED_BOTH => (true, true)
@@ -208,6 +197,8 @@ object DeductionUtils extends LazyLogging {
             case RelationMatchState.MATCHED_TARGET_NODE_ONLY => (false, true)
             case RelationMatchState.NOT_MATCHED_BOTH => (false, false)
         } 
+
+        val existDenialWord:Boolean = nodeMap.filter(x => x._2.predicateArgumentStructure.isDenialWord && (x._2.predicateArgumentStructure.caseType.equals("文末") || x._2.predicateArgumentStructure.caseType.equals("ROOT"))).size > 0
 
         val sourceNodeSurface = nodeMap.get(edge.sourceId).get.asInstanceOf[KnowledgeBaseNode].predicateArgumentStructure.surface
         val destinationNodeSurface = nodeMap.get(edge.destinationId).get.asInstanceOf[KnowledgeBaseNode].predicateArgumentStructure.surface
@@ -220,12 +211,12 @@ object DeductionUtils extends LazyLogging {
 
         val sourceMatchedKnowledgeNodes:List[MatchedKnowledgeNode] = sourceAlias match {
             case "" => List.empty[MatchedKnowledgeNode]
-            case _ => getMatchedKnowledgeNodes(edge, sourceKnowledgeNodes, nodeMap.get(edge.sourceId).get, featureSimilarityMap, deductionUnitName, isNegativeMeaning)
+            case _ => getMatchedKnowledgeNodes(edge, sourceKnowledgeNodes, nodeMap.get(edge.sourceId).get, featureSimilarityMap, deductionUnitName, isNegativeMeaningMap, existDenialWord, transversalState)
         }
 
         val destinationMatchedKnowledgeNodes:List[MatchedKnowledgeNode] = destinationAlias match {
             case "" =>  List.empty[MatchedKnowledgeNode]
-            case _ => getMatchedKnowledgeNodes(edge, destinationKnowledgeNodes, nodeMap.get(edge.destinationId).get, featureSimilarityMap, deductionUnitName, isNegativeMeaning)
+            case _ => getMatchedKnowledgeNodes(edge, destinationKnowledgeNodes, nodeMap.get(edge.destinationId).get, featureSimilarityMap, deductionUnitName, isNegativeMeaningMap, existDenialWord, transversalState)
         }
 
         val sourceNode = CoveredPropositionNode(terminalId = edge.sourceId, terminalSurface = sourceNodeSurface, terminalUrl = "", matchedKnowledgeNodes=sourceMatchedKnowledgeNodes, isConfirmedSource)
@@ -234,12 +225,14 @@ object DeductionUtils extends LazyLogging {
     }
 
     private def getMatchedKnowledgeNodes(
-        edge: KnowledgeBaseEdge, 
-        serchedKnowledgeNodes:List[KnowledgeBaseNode | KnowledgeBaseSynonymNode | KnowledgeFeatureReference], 
-        proopsitionNode: KnowledgeBaseNode,
-        featureSimilarityMap:Map[String, Float],
-        deductionUnitName:String,
-        isNegativeMeaning:Boolean, 
+            edge: KnowledgeBaseEdge, 
+            serchedKnowledgeNodes:List[KnowledgeBaseNode | KnowledgeBaseSynonymNode | KnowledgeFeatureReference], 
+            proopsitionNode: KnowledgeBaseNode,
+            featureSimilarityMap:Map[String, Float],
+            deductionUnitName:String,
+            isNegativeMeaningMap:Map[String,Boolean], 
+            existDenialWord:Boolean,
+            transversalState:TransversalState
         ):List[MatchedKnowledgeNode]= {
         
         val emptyMatchedFeatureInfo = MatchedFeatureInfo("", FeatureType.UNSPECIFIED.index,  -1.0)
@@ -256,7 +249,7 @@ object DeductionUtils extends LazyLogging {
                         nodeType = a.predicateArgumentStructure.nodeType,
                         featureInfo = emptyMatchedFeatureInfo,
                         deductionUnit = deductionUnitName,
-                        isNegativeMeaning = isNegativeMeaning
+                        isNegativeMeaning = checkNegativeMatch(Neo4JUtilsImpl(), a.sentenceId, existDenialWord, isNegativeMeaningMap, transversalState)
                     )
                 }
                 case b:KnowledgeBaseSynonymNode => {
@@ -269,7 +262,7 @@ object DeductionUtils extends LazyLogging {
                         nodeType = proopsitionNode.predicateArgumentStructure.nodeType, 
                         featureInfo = emptyMatchedFeatureInfo,
                         deductionUnit = deductionUnitName,
-                        isNegativeMeaning = isNegativeMeaning
+                        isNegativeMeaning = checkNegativeMatch(Neo4JUtilsImpl(), b.sentenceId, existDenialWord, isNegativeMeaningMap, transversalState)
                     )
                 }
                 case c:KnowledgeFeatureReference => {
@@ -295,11 +288,24 @@ object DeductionUtils extends LazyLogging {
                         nodeType = proopsitionNode.predicateArgumentStructure.nodeType, 
                         featureInfo = matchedFeatureInfo,
                         deductionUnit = deductionUnitName,
-                        isNegativeMeaning = isNegativeMeaning
+                        isNegativeMeaning = checkNegativeMatch(Neo4JUtilsImpl(), c.sentenceId, existDenialWord, isNegativeMeaningMap, transversalState)
                     )
                 }
             }}
         )    
     }
 
+    //SentenceIdごとに文末の否定、肯定の一致があるかチェックする。
+    private def checkNegativeMatch(neo4jUtils:Neo4JUtilsImpl, sentenceId:String, existDenialWord:Boolean, isNegativeMeaningMap:Map[String,Boolean], transversalState:TransversalState): Boolean = {        
+        isNegativeMeaningMap.get(sentenceId) match {
+            case Some(v) => v
+            case _  => {
+                val query = "MATCH (n) WHERE n.sentenceId='%s' AND n.isDenialWord='%s' AND (n.caseType='ROOT' OR n.caseType='文末') RETURN n".format(sentenceId, existDenialWord)
+                val jsonStr: String = neo4jUtils.getCypherQueryResult(query, "", transversalState)
+                val neo4jRecords: Neo4jRecords = Json.parse(jsonStr).as[Neo4jRecords]
+                neo4jRecords.records.size == 0
+            }
+        }
+    }
+    
 }
