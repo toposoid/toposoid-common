@@ -235,8 +235,6 @@ object DeductionUtils extends LazyLogging {
             transversalState:TransversalState
         ):List[MatchedKnowledgeNode]= {
         
-        val emptyMatchedFeatureInfo = MatchedFeatureInfo("", FeatureType.UNSPECIFIED.index,  -1.0)
-
         serchedKnowledgeNodes.map(x => {
             x match {
                 case a:KnowledgeBaseNode => {
@@ -247,7 +245,7 @@ object DeductionUtils extends LazyLogging {
                         caseNameOnEdge = edge.caseStr,
                         isDenialWord = a.predicateArgumentStructure.isDenialWord,
                         nodeType = a.predicateArgumentStructure.nodeType,
-                        featureInfo = emptyMatchedFeatureInfo,
+                        featureInfo = MatchedFeatureInfo("", FeatureType.PREDICATE_ARGUMENT.index,  -1.0),
                         deductionUnit = deductionUnitName,
                         isNegativeMeaning = checkNegativeMatch(Neo4JUtilsImpl(), a.sentenceId, existDenialWord, isNegativeMeaningMap, transversalState)
                     )
@@ -260,7 +258,7 @@ object DeductionUtils extends LazyLogging {
                         caseNameOnEdge = edge.caseStr,
                         isDenialWord = proopsitionNode.predicateArgumentStructure.isDenialWord,
                         nodeType = proopsitionNode.predicateArgumentStructure.nodeType, 
-                        featureInfo = emptyMatchedFeatureInfo,
+                        featureInfo = MatchedFeatureInfo("", FeatureType.SYNONYM.index,  -1.0),
                         deductionUnit = deductionUnitName,
                         isNegativeMeaning = checkNegativeMatch(Neo4JUtilsImpl(), b.sentenceId, existDenialWord, isNegativeMeaningMap, transversalState)
                     )
@@ -275,7 +273,7 @@ object DeductionUtils extends LazyLogging {
                             MatchedFeatureInfo(c.featureId, FeatureType.TABLE.index, featureSimilarityMap.getOrElse(c.featureId, -1.0F))
                         }
                         case _ => {
-                            emptyMatchedFeatureInfo    
+                            MatchedFeatureInfo("", FeatureType.UNSPECIFIED.index,  -1.0)
                         }
                     }
                     
