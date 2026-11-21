@@ -21,5 +21,8 @@ enum AuthenticityType(val index: Int) {
   case INSUFFICIENT extends AuthenticityType(0)
   case SUPPORTED extends AuthenticityType(1)
   case REFUTED extends AuthenticityType(2)
-  case CONFLICTING extends AuthenticityType(3)  
+  case CONFLICTING extends AuthenticityType(3) 
+  case NO_EFFECT extends AuthenticityType(4)  
+  case OPTIMUM_TRUE extends AuthenticityType(5)  
+  case OPTIMUM_FALSE extends AuthenticityType(6)  
 }
